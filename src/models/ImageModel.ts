@@ -75,8 +75,8 @@ class ImageModel extends BaseModel {
               height: config.height,
               radius: config.radius,
               angle: config.angle,
-              originWidth: height,
-              originHeight: width,
+              originWidth: width,
+              originHeight: height,
             });
             resolve(model);
           },
