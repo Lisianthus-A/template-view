@@ -1,0 +1,38 @@
+.icon-bar {
+  margin-top: 16px;
+
+  :global {
+    .name {
+      margin-bottom: 8px;
+      padding: 0 16px;
+      user-select: none;
+    }
+
+    .icon-list {
+      margin: 0 16px;
+      padding: 8px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background-color: #f5f5f5;
+    }
+
+    .icon-wrapper {
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+      text-align: center;
+      border-radius: 4px;
+      font-size: 20px;
+      cursor: pointer;
+      &:hover {
+        background-color: #d9d9d9;
+      }
+    }
+
+    .icon-active {
+      color: var(--primary-color);
+    }
+  }
+}

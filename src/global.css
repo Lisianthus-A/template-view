@@ -1,5 +1,11 @@
+:root {
+  --primary-color: #0066ff;
+}
+
 body {
   margin: 0;
+  font-size: 14px;
+  color: #242424;
 }
 
 * {

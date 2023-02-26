@@ -30,8 +30,3 @@ export const debounce = (fn: Function, ms: number) => {
     }, ms) as any;
   };
 };
-
-/**
- * 获取随机 id
- */
-export const getRandomId = () => String((Math.random() * 100000000) >> 0);

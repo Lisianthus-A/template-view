@@ -1,8 +1,11 @@
-import { Canvas } from "@/components";
+import styles from "./App.module.scss";
+import { Header, Sidebar, Canvas } from "@/components";
 
 function App() {
   return (
-    <div className="app">
+    <div className={styles.app}>
+      <Header />
+      <Sidebar />
       <Canvas />
     </div>
   );
