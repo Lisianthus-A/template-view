@@ -1,9 +1,8 @@
 import styles from "./App.module.scss";
 import { Header, Sidebar, Canvas } from "@/layout";
-import { Loading, Toast } from "@/components";
+import { Loading } from "@/components";
 import { useEffect, useState, createContext } from "react";
 import { delay } from "@/utils";
-import { getItemById } from "@/utils/api";
 
 const initValue = {
   id: "",
@@ -22,22 +21,7 @@ function App() {
   const [contextValue, setContextValue] = useState(initValue);
 
   useEffect(() => {
-    const getData = async () => {
-      const params = new URLSearchParams(location.search);
-      const id = params.get("id");
-      if (!id) {
-        return;
-      }
-
-      const res = await getItemById(id);
-      if (res.code !== 0) {
-        await delay(500);
-        return Toast.show(res.text);
-      }
-      setContextValue(res.data);
-    };
-
-    Promise.all([getData(), delay(500)]).then(() => {
+    delay(500).then(() => {
       setLoading(false);
     });
   }, []);

@@ -7,7 +7,6 @@ import styles from "./Canvas.module.scss";
 
 function Canvas() {
   const canvasData = useContext(CanvasDataContext);
-  const gridRef = useRef<HTMLCanvasElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const handleClick = () => {
@@ -20,7 +19,7 @@ function Canvas() {
   };
 
   useLayoutEffect(() => {
-    if (!gridRef.current || !canvasRef.current) {
+    if (!canvasRef.current) {
       return;
     }
 
@@ -106,7 +105,7 @@ function Canvas() {
 
   return (
     <div className={styles.canvas} onClick={handleClick}>
-      <canvas ref={gridRef} id="grid" className="gap" />
+      <div id="grid" className="gap" />
       <canvas className="gap" ref={canvasRef} />
     </div>
   );

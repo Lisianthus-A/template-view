@@ -82,7 +82,6 @@ class CanvasModel {
       preserveObjectStacking: true,
     });
     this.children = [];
-    this.drawGrid();
     this.disableSave = false;
 
     this.loadFromJson = this.loadFromJson.bind(this);
@@ -113,46 +112,6 @@ class CanvasModel {
     }
 
     return id;
-  }
-
-  // 在额外 canvas 上画网格
-  private drawGrid() {
-    const grid = document.getElementById("grid") as HTMLCanvasElement;
-    grid.width = this.width;
-    grid.height = this.height;
-
-    const dpr = window.devicePixelRatio || 1;
-
-    const ctx = grid.getContext("2d")!;
-    ctx.clearRect(0, 0, this.width, this.height);
-    const gridWidth = 10;
-    // vertical
-    for (let x = 0; x <= this.width; x += gridWidth) {
-      ctx.beginPath();
-      ctx.moveTo(x - dpr / 2, 0);
-      ctx.lineTo(x - dpr / 2, this.height);
-      ctx.closePath();
-      if (x % (gridWidth * 4) === 0) {
-        ctx.strokeStyle = "#ccc";
-      } else {
-        ctx.strokeStyle = "#eee";
-      }
-      ctx.stroke();
-    }
-
-    // horizon
-    for (let y = 0; y <= this.height; y += gridWidth) {
-      ctx.beginPath();
-      ctx.moveTo(0, y - dpr / 2);
-      ctx.lineTo(this.width, y - dpr / 2);
-      ctx.closePath();
-      if (y % (gridWidth * 4) === 0) {
-        ctx.strokeStyle = "#ccc";
-      } else {
-        ctx.strokeStyle = "#eee";
-      }
-      ctx.stroke();
-    }
   }
 
   // 选中时某组件时
@@ -310,7 +269,9 @@ class CanvasModel {
     this.height = height;
     this.instance.setWidth(width);
     this.instance.setHeight(height);
-    this.drawGrid();
+    const grid = document.getElementById("grid")!;
+    grid.style.width = `${width}px`;
+    grid.style.height = `${height}px`;
     if (this.instance.backgroundImage) {
       (this.instance.backgroundImage as fabric.Image).dispose();
       this.replaceBackgroundImage(this.backgroundImage);

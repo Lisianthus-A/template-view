@@ -3,8 +3,7 @@ import { canvasRef } from "@/store";
 import { ImageModel, TextModel } from "@/models";
 import EventBus from "@/utils/event";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getItems, addFavorite, deleteFavorite } from "@/utils/api";
-import { Icon, Input, ScrollText, Dropdown, Toast } from "@/components";
+import { Icon, Input, ScrollText, Dropdown } from "@/components";
 import type { DragEvent } from "react";
 // import type { IconType } from "@/components/Icon/Icon";
 
@@ -109,17 +108,6 @@ const textItem: ShowItem = {
   ],
 };
 
-const orderMap: Record<string, number> = {
-  推荐位: 1,
-  海报: 2,
-  内容: 3,
-  背景: 1,
-  人物: 2,
-  装饰: 3,
-  动物: 4,
-  组合: 5,
-};
-
 function Collection({
   type,
   showSearch = true,
@@ -197,49 +185,7 @@ function Collection({
   };
 
   const handleDropdownClick = async (dropItem: any, item: Item) => {
-    if (onDropdownItemClick) {
-      onDropdownItemClick(dropItem, item);
-      return;
-    }
-
-    let res;
-    if (item.isFav) {
-      res = await deleteFavorite(item.id);
-    } else {
-      res = await addFavorite(item.id);
-    }
-
-    await getData();
-    if (res.code === 0) {
-      Toast.show(item.isFav ? "取消收藏成功" : "收藏成功");
-    } else {
-      Toast.show(res.text);
-    }
-  };
-
-  const getData = async () => {
-    const res = await getItems<Item[]>();
-    const filterItems = res.data.filter((item) => item.type === type);
-
-    const mapTagToIndex: Record<string, number> = {};
-    const nextShowItems: ShowItem[] = [];
-    filterItems.forEach((item) => {
-      if (mapTagToIndex[item.tag] === undefined) {
-        mapTagToIndex[item.tag] = nextShowItems.length;
-        nextShowItems.push({
-          title: item.tag,
-          hasMore: false,
-          items: [],
-        });
-      }
-
-      const index = mapTagToIndex[item.tag];
-      const showItem = nextShowItems[index];
-      showItem.items.push(item);
-      showItem.hasMore = showItem.items.length > 4;
-    });
-    fullItemsRef.current = nextShowItems;
-    setShowItems(nextShowItems);
+    onDropdownItemClick && onDropdownItemClick(dropItem, item);
   };
 
   const handleSearch = (value: string) => {
@@ -274,12 +220,6 @@ function Collection({
   };
 
   useEffect(() => {
-    if (type === "template" || type === "material") {
-      getData();
-    }
-  }, [type]);
-
-  useEffect(() => {
     if (type === "custom") {
       fullItemsRef.current = items;
       setShowItems(items);
@@ -299,12 +239,6 @@ function Collection({
     };
   }, [handleItemClick]);
 
-  const sortedItems = showItems.slice().sort((a, b) => {
-    const aOrder = orderMap[a.title] || 999;
-    const bOrder = orderMap[b.title] || 999;
-    return aOrder - bOrder;
-  });
-
   return (
     <div className={styles["collection-wrapper"]}>
       {!isShowMore && showSearch && (
@@ -314,8 +248,8 @@ function Collection({
           placeholder="输入搜索内容"
         />
       )}
-      {sortedItems.length === 0 && <div className="no-data">暂无数据</div>}
-      {sortedItems.map((showItem, index) => {
+      {showItems.length === 0 && <div className="no-data">暂无数据</div>}
+      {showItems.map((showItem, index) => {
         const items =
           isShowMore || isSearch ? showItem.items : showItem.items.slice(0, 4);
 

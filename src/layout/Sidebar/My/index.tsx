@@ -1,14 +1,5 @@
-import { useContext, useEffect, useRef, useState } from "react";
-import { Tabs, Toast, Collection } from "@/components";
-import { CanvasDataContext } from "@/App";
-import {
-  getMyItems,
-  addFavorite,
-  addShared,
-  deleteFavorite,
-  deleteItem,
-  deleteShared,
-} from "@/utils/api";
+import { useEffect, useRef, useState } from "react";
+import { Tabs, Collection } from "@/components";
 import styles from "./index.module.scss";
 import classNames from "classnames";
 
@@ -44,7 +35,6 @@ function My() {
     shared: [],
     favorite: [],
   });
-  const canvasData = useContext(CanvasDataContext);
   const [items, setItems] = useState<any[]>([]);
   const [currentTab, setCurrentTab] = useState("created");
   const [currentType, setCurrentType] = useState("material");
@@ -55,11 +45,6 @@ function My() {
 
   const handleTypeChange = (type: string) => {
     setCurrentType(type);
-  };
-
-  const getData = async () => {
-    const res = await getMyItems();
-    dataRef.current = res.data;
   };
 
   const handleDropdownItemClick = (dItem: any, item: any) => {
@@ -74,74 +59,18 @@ function My() {
     }
   };
 
-  const doEdit = (item: any) => {
-    location.replace(`${location.origin}?id=${item.id}`);
-  };
+  const doEdit = (item: any) => {};
 
-  const doFavorite = async (item: any) => {
-    let res;
-    if (item.isFav) {
-      res = await deleteFavorite(item.id);
-    } else {
-      res = await addFavorite(item.id);
-    }
+  const doFavorite = async (item: any) => {};
 
-    await getData();
-    resolveData();
-    if (res.code === 0) {
-      Toast.show(item.isFav ? "取消收藏成功" : "收藏成功");
-    } else {
-      Toast.show(res.text);
-    }
-  };
+  const doShare = async (item: any) => {};
 
-  const doShare = async (item: any) => {
-    let res;
-    if (item.isShared) {
-      res = await deleteShared(item.id);
-    } else {
-      res = await addShared(item.id);
-    }
-
-    await getData();
-    resolveData();
-    if (res.code === 0) {
-      Toast.show(item.isShared ? "取消分享成功" : "分享成功");
-    } else {
-      Toast.show(res.text);
-    }
-  };
-
-  const doDelete = async (item: any) => {
-    const res = await deleteItem(item.id);
-
-    await getData();
-    resolveData();
-    if (res.code === 0) {
-      Toast.show("删除成功");
-    } else {
-      Toast.show(res.text);
-    }
-
-    if (canvasData.id === item.id) {
-      setTimeout(() => {
-        location.replace(location.origin);
-      }, 1000);
-    }
-  };
+  const doDelete = async (item: any) => {};
 
   const resolveData = () => {
     const dataList = dataRef.current[currentTab];
     setItems(dataList.filter((item) => item.type === currentType));
   };
-
-  useEffect(() => {
-    const init = async () => {
-      await getData();
-      resolveData();
-    };
-    init();
-  }, []);
 
   useEffect(resolveData, [currentTab, currentType]);
 

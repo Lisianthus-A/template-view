@@ -2,90 +2,19 @@ import styles from "./Header.module.scss";
 import { useState, useContext, useEffect } from "react";
 import Psd from "@webtoon/psd";
 import { canvasRef } from "@/store";
-import {
-  Button,
-  Icon,
-  Modal,
-  Tooltip,
-  Select,
-  Input,
-  Toast,
-} from "@/components";
+import { Button, Icon, Tooltip, Toast } from "@/components";
 import { CanvasDataContext } from "@/App";
-import { addItem, editItem } from "@/utils/api";
 import { ImageModel } from "@/models";
 import EventBus from "@/utils/event";
 import type { ChangeEvent } from "react";
 
-const types = [
-  {
-    value: "template",
-    text: "模板",
-    tags: [
-      {
-        value: "推荐位",
-        text: "推荐位",
-      },
-      {
-        value: "海报",
-        text: "海报",
-      },
-      {
-        value: "内容",
-        text: "内容",
-      },
-    ],
-  },
-  {
-    value: "material",
-    text: "素材",
-    tags: [
-      {
-        value: "背景",
-        text: "背景",
-      },
-      {
-        value: "人物",
-        text: "人物",
-      },
-      {
-        value: "动物",
-        text: "动物",
-      },
-      {
-        value: "装饰",
-        text: "装饰",
-      },
-      {
-        value: "组合",
-        text: "组合",
-      },
-    ],
-  },
-];
-
 function Header() {
   const canvasData = useContext(CanvasDataContext);
-  const [type, setType] = useState(
-    types.find((item) => item.value === canvasData.type)!
-  );
-  const [tag, setTag] = useState(canvasData.tag);
-  const [visible, setVisible] = useState(false);
-  const [name, setName] = useState(canvasData.name);
 
   const [stackStatus, setStackStatus] = useState({
     undo: false,
     redo: false,
   });
-
-  const handleTypeChange = (value: string, item: any) => {
-    if (item === type) {
-      return;
-    }
-
-    setType(item);
-    setTag(item.tags[0].value);
-  };
 
   const handleSaveImage = async () => {
     if (!canvasRef.current) {
@@ -104,41 +33,7 @@ function Header() {
       return;
     }
 
-    const coverImage = await canvasRef.current.toImage();
-    const json = canvasRef.current.toJson();
-
-    const isAdd = canvasData.id === "" || canvasData.internal;
-    let res: any;
-
-    if (isAdd) {
-      res = await addItem({
-        name,
-        tag,
-        type: type.value,
-        data: json,
-        image: coverImage,
-      });
-      setTimeout(() => {
-        location.replace(`${location.origin}?id=${res.data.id}`);
-      }, 1000);
-    } else {
-      res = await editItem({
-        id: canvasData.id,
-        name,
-        tag,
-        type: type.value,
-        data: json,
-        image: coverImage,
-      });
-    }
-
-    if (res.code === 0) {
-      Toast.show("已保存");
-    } else {
-      Toast.show(res.text || "保存失败");
-    }
-
-    setVisible(false);
+    canvasRef.current.toJson(true);
   };
 
   const handleNew = () => {
@@ -192,6 +87,31 @@ function Header() {
     } catch (err) {
       Toast.show("psd 解析失败");
       console.log("catch psd error", err);
+    }
+  };
+
+  const handleFileChange2 = async (evt: ChangeEvent<HTMLInputElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+    const file = evt.target.files && evt.target.files[0];
+    if (file === null) {
+      return;
+    }
+    evt.target.value = "";
+
+    if (!file.name.endsWith(".json")) {
+      return Toast.show("请选择正确的文件类型");
+    }
+
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      canvas.loadFromJson(json);
+    } catch (err) {
+      Toast.show("导入失败");
+      console.log("catch import error", err);
     }
   };
 
@@ -253,7 +173,7 @@ function Header() {
       </div>
       <div className="header-right">
         <Button style={{ marginRight: 8 }}>
-          从 psd 导入
+          从设计图导入
           <input
             className="hide-input"
             type="file"
@@ -261,43 +181,24 @@ function Header() {
             onChange={handleFileChange}
           />
         </Button>
+        <Button style={{ marginRight: 8 }}>
+          导入
+          <input
+            className="hide-input"
+            type="file"
+            accept=".json"
+            onChange={handleFileChange2}
+          />
+        </Button>
 
         <Button style={{ marginRight: 8 }} onClick={handleSaveImage}>
           导出图片
         </Button>
 
-        <Button type="primary" onClick={() => setVisible(true)}>
+        <Button type="primary" onClick={handleSaveData}>
           保存
         </Button>
       </div>
-      <Modal
-        visible={visible}
-        title="保存"
-        onCancel={() => setVisible(false)}
-        onOk={handleSaveData}
-        className={styles["save-modal"]}
-      >
-        <div className="form-item">
-          <div className="form-field">名称：</div>
-          <Input value={name} onChange={setName} maxLength={64} />
-        </div>
-        <div className="form-item">
-          <div className="form-field">类型：</div>
-          <Select
-            value={type.value}
-            options={types}
-            onChange={handleTypeChange}
-          />
-        </div>
-        <div className="form-item">
-          <div className="form-field">标签：</div>
-          <Select
-            options={type.tags}
-            value={tag}
-            onChange={(value) => setTag(value)}
-          />
-        </div>
-      </Modal>
     </div>
   );
 }
