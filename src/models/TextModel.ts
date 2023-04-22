@@ -11,6 +11,7 @@ interface Config {
   fontStyle?: "normal" | "italic";
   color?: string;
   strokeColor?: string;
+  pattern?: string;
   underline?: boolean;
   linethrough?: boolean;
   x?: number;
@@ -18,6 +19,7 @@ interface Config {
   width?: number;
   height?: number;
   angle?: number;
+  zIndex?: number;
 }
 
 const defaultConfig = {
@@ -28,14 +30,19 @@ const defaultConfig = {
   fontStyle: "normal",
   color: "rgba(0, 0, 0, 1)",
   strokeColor: "",
+  pattern: "",
   underline: false,
   linethrough: false,
-  x: 100,
-  y: 100,
+  x: 0,
+  y: 0,
   width: 0,
   height: 0,
   angle: 0,
+  zIndex: 5,
 };
+
+const loadedFonts = new Set<string>();
+loadedFonts.add("Times New Roman");
 
 class TextModel extends BaseModel {
   config: Required<Config>;
@@ -52,6 +59,8 @@ class TextModel extends BaseModel {
     this.setText = this.setText.bind(this);
     this.setFontFamily = this.setFontFamily.bind(this);
     this.setFontSize = this.setFontSize.bind(this);
+    this.setPattern = this.setPattern.bind(this);
+    this.removePattern = this.removePattern.bind(this);
     this.setColor = this.setColor.bind(this);
     this.setStrokeColor = this.setStrokeColor.bind(this);
     this.fontStyleHandler = this.fontStyleHandler.bind(this);
@@ -61,34 +70,57 @@ class TextModel extends BaseModel {
     console.log("text", this);
   }
 
-  static create(_config?: Config) {
-    return new Promise<TextModel>((resolve) => {
-      const config = Object.assign(
-        { originWidth: 0, originHeight: 0 },
-        defaultConfig,
-        _config
+  static async create(_config?: Config) {
+    const config = Object.assign(
+      { originWidth: 0, originHeight: 0 },
+      defaultConfig,
+      _config
+    );
+    if (!loadedFonts.has(config.fontFamily)) {
+      const font = new FontFace(
+        config.fontFamily,
+        `url(./fonts/${config.fontFamily}.ttf)`
       );
-      const text = new fabric.IText(config.text, {
-        left: config.x,
-        top: config.y,
-        angle: config.angle,
-        fill: config.color,
-        stroke: config.strokeColor,
-        fontSize: config.fontSize,
-        fontFamily: config.fontFamily,
-        fontWeight: config.fontWeight,
+      await font.load();
+      document.fonts.add(font);
+      loadedFonts.add(config.fontFamily);
+    }
+
+    let pattern = "";
+    if (config.pattern) {
+      pattern = await new Promise((resolve) => {
+        new fabric.Pattern(
+          {
+            source: config.pattern,
+            repeat: "repeat",
+          },
+          // @ts-ignore
+          resolve
+        );
       });
-      if (config.width === 0) {
-        config.width = text.width || 0;
-      }
-      if (config.height === 0) {
-        config.height = text.height || 0;
-      }
-      config.originWidth = text.width || 0;
-      config.originHeight = text.height || 0;
-      const model = new TextModel(text, config);
-      resolve(model);
+    }
+
+    const text = new fabric.IText(config.text, {
+      left: config.x,
+      top: config.y,
+      angle: config.angle,
+      fill: pattern || config.color,
+      stroke: config.strokeColor,
+      fontSize: config.fontSize,
+      fontFamily: config.fontFamily,
+      fontWeight: config.fontWeight,
+      cursorColor: "rgb(0, 0, 0)",
     });
+    if (config.width === 0) {
+      config.width = text.width || 0;
+    }
+    if (config.height === 0) {
+      config.height = text.height || 0;
+    }
+    config.originWidth = text.width || 0;
+    config.originHeight = text.height || 0;
+
+    return new TextModel(text, config);
   }
 
   private updateTextConfig() {
@@ -118,6 +150,7 @@ class TextModel extends BaseModel {
     this.instance.set("text", text);
 
     this.updateTextConfig();
+    EventBus.emit("save-to-stack");
     canvas.render();
   }
 
@@ -132,6 +165,7 @@ class TextModel extends BaseModel {
     this.instance.set("fontFamily", fontFamily);
 
     this.updateTextConfig();
+    EventBus.emit("save-to-stack");
     canvas.render();
   }
 
@@ -143,9 +177,47 @@ class TextModel extends BaseModel {
     }
 
     this.config.color = color;
-    this.instance.set("fill", color);
+    if (this.config.pattern === "") {
+      this.instance.set("fill", color);
+    }
 
     this.updateTextConfig();
+    EventBus.emit("save-to-stack");
+    canvas.render();
+  }
+
+  // 设置填充图片
+  setPattern(imageUrl: string) {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    new fabric.Pattern(
+      {
+        source: imageUrl,
+        repeat: "repeat",
+      },
+      // @ts-ignore
+      (p) => {
+        this.config.pattern = imageUrl;
+        this.instance.set("fill", p);
+        EventBus.emit("save-to-stack");
+        canvas.render();
+      }
+    );
+  }
+
+  // 移除填充图片
+  removePattern() {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    this.config.pattern = "";
+    this.instance.set("fill", this.config.color);
+    EventBus.emit("save-to-stack");
     canvas.render();
   }
 
@@ -160,6 +232,7 @@ class TextModel extends BaseModel {
     this.instance.set("stroke", color);
 
     this.updateTextConfig();
+    EventBus.emit("save-to-stack");
     canvas.render();
   }
 
@@ -174,9 +247,8 @@ class TextModel extends BaseModel {
     this.instance.set("fontSize", size);
 
     this.updateTextConfig();
+    EventBus.emit("save-to-stack");
     canvas.render();
-
-    this.instance.set("italic");
   }
 
   // 设置字体各种样式
@@ -208,6 +280,7 @@ class TextModel extends BaseModel {
     }
 
     this.updateTextConfig();
+    EventBus.emit("save-to-stack");
     canvas.render();
   }
 
@@ -227,6 +300,7 @@ class TextModel extends BaseModel {
     }
 
     this.updateTextConfig();
+    EventBus.emit("save-to-stack");
     canvas.render();
   }
 
@@ -241,6 +315,7 @@ class TextModel extends BaseModel {
     this.instance.set("underline", this.config.underline);
 
     this.updateTextConfig();
+    EventBus.emit("save-to-stack");
     canvas.render();
   }
 
@@ -255,6 +330,7 @@ class TextModel extends BaseModel {
     this.instance.set("linethrough", this.config.linethrough);
 
     this.updateTextConfig();
+    EventBus.emit("save-to-stack");
     canvas.render();
   }
 
@@ -274,11 +350,18 @@ class TextModel extends BaseModel {
           handler: this.setText,
         },
         {
-          id: `${this.id}-fontFamily`,
-          type: "select",
-          name: "字体",
+          id: `${this.id}-setPattern`,
+          type: "upload-image",
+          name: "设置填充图片",
           value: "",
-          handler: () => {},
+          handler: this.setPattern,
+        },
+        {
+          id: `${this.id}-removePattern`,
+          type: "button",
+          name: "移除填充图片",
+          value: "",
+          handler: this.removePattern,
         },
         {
           id: `${this.id}-color`,

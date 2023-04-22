@@ -7,6 +7,7 @@ specifiers:
   '@types/react-color': ^3.0.6
   '@types/react-dom': ^18.0.9
   '@vitejs/plugin-react': ^3.0.0
+  '@webtoon/psd': ^0.3.0
   classnames: ^2.3.2
   fabric: ^5.3.0
   react: ^18.2.0
@@ -18,6 +19,7 @@ specifiers:
   vite: ^4.0.0
 
 dependencies:
+  '@webtoon/psd': 0.3.0
   classnames: 2.3.2
   fabric: 5.3.0
   react: 18.2.0
@@ -591,6 +593,10 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@webtoon/psd/0.3.0:
+    resolution: {integrity: sha512-n4dnx1raVOZ68vjDVRm/OIwSHSj9qP0SmEapvPcSy5cPCCLMHclRXvh/oF9F2nqBP2+d5D8pGom2ONOWb8td3w==}
+    dev: false
 
   /abab/2.0.6:
     resolution: {integrity: sha512-j2afSsaIENvHZN2B8GOpF566vZ5WVk5opAiMTvWgaQT8DkbOqsTfvNAvHoRGU2zzP8cPoqys+xHTRDWW8L+/BA==}

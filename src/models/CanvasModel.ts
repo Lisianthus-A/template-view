@@ -1,12 +1,14 @@
 import { fabric } from "fabric";
-import { Toast } from "@/components";
 import EventBus from "@/utils/event";
+import { ImageModel, TextModel } from "@/models";
+import { canvasRef } from "@/store";
 
 interface Config {
   canvas: HTMLCanvasElement;
   width: number;
   height: number;
   backgroundImage?: string;
+  backgroundColor?: string;
 }
 
 export interface FormObject {
@@ -32,37 +34,70 @@ interface Child {
 }
 
 class CanvasModel {
-  private instance: fabric.Canvas;
+  instance: fabric.Canvas;
+  private mapIdToChild: Map<number, Child>;
+  private mapInstanceToChild: Map<Child["instance"], Child>;
   private children: Child[];
   private width: number;
   private height: number;
   private backgroundImage: string;
+  private backgroundColor: string;
+  private disableSave: boolean = true;
+  private operateStack: Record<string, any>[] = [];
+  private operateStack2: Record<string, any>[] = [];
+  private timer: number = 0;
+  static OPERATE_STACK_MAX_LENGTH = 10;
+  private defaultJson: any = {
+    type: "canvas",
+    width: 1280,
+    height: 720,
+    backgroundImage: "",
+    backgroundColor: "",
+    children: [],
+  };
 
   constructor(config: Config) {
+    canvasRef.current = this;
     fabric.Object.prototype.transparentCorners = false;
     fabric.Object.prototype.cornerStyle = "circle";
     fabric.Object.prototype.cornerStrokeColor = "#0066ff";
     fabric.Object.prototype.cornerColor = "#0066ff";
     fabric.Object.prototype.borderDashArray = [5, 5];
     fabric.Object.prototype.borderColor = "#0066ff";
+    fabric.Object.prototype.lockScalingFlip = true;
+    fabric.Group.prototype.lockRotation = true;
+    fabric.Image.prototype.lockScalingFlip = true;
+
+    this.mapIdToChild = new Map();
+    this.mapInstanceToChild = new Map();
 
     this.width = config.width;
     this.height = config.height;
     this.backgroundImage = config.backgroundImage || "";
+    this.backgroundColor = config.backgroundColor || "";
     this.instance = new fabric.Canvas(config.canvas, {
       width: config.width,
       height: config.height,
+      backgroundColor: config.backgroundColor,
+      preserveObjectStacking: true,
     });
-    this.instance.setWidth(config.width);
     this.children = [];
     this.drawGrid();
+    this.disableSave = false;
 
+    this.loadFromJson = this.loadFromJson.bind(this);
     this.resize = this.resize.bind(this);
     this.replaceBackgroundImage = this.replaceBackgroundImage.bind(this);
+    this.removeBackgroundImage = this.removeBackgroundImage.bind(this);
+    this.setBackgroundColor = this.setBackgroundColor.bind(this);
     this.onSelect = this.onSelect.bind(this);
+    this.saveToStack = this.saveToStack.bind(this);
+    this.emitStackStatus = this.emitStackStatus.bind(this);
     this.instance.on("selection:created", this.onSelect);
     this.instance.on("selection:updated", this.onSelect);
     this.instance.on("selection:cleared", this.onSelect);
+
+    EventBus.on("save-to-stack", this.saveToStack);
 
     // 触发一次选中
     setTimeout(this.onSelect);
@@ -151,6 +186,85 @@ class CanvasModel {
     return left;
   }
 
+  // 操作数据保存
+  private saveToStack() {
+    if (this.disableSave) {
+      return;
+    }
+
+    clearTimeout(this.timer);
+    this.timer = window.setTimeout(() => {
+      const data = this.toJson();
+      this.operateStack.push(JSON.parse(JSON.stringify(data)));
+      if (this.operateStack.length > CanvasModel.OPERATE_STACK_MAX_LENGTH) {
+        this.operateStack.shift();
+      }
+      this.operateStack2.length = 0;
+      this.emitStackStatus();
+    }, 200);
+  }
+
+  // 通知 undo redo 状态
+  private emitStackStatus() {
+    EventBus.emit("stack-status", {
+      undo: this.operateStack.length > 0,
+      redo: this.operateStack2.length > 0,
+    });
+  }
+
+  // 导入数据
+  static async createByJson(
+    canvas: HTMLCanvasElement,
+    data: ReturnType<CanvasModel["toJson"]>
+  ) {
+    const canvasModel = new CanvasModel({
+      canvas,
+      width: data.width,
+      height: data.height,
+    });
+
+    await canvasModel.loadFromJson(data, false);
+    return canvasModel;
+  }
+
+  async loadFromJson(
+    data: ReturnType<CanvasModel["toJson"]>,
+    notDefault = true
+  ) {
+    this.disableSave = true;
+    this.backgroundColor = "";
+    this.backgroundImage = "";
+    this.width = 1280;
+    this.height = 720;
+    this.instance.clear();
+    this.children = [];
+    this.mapIdToChild.clear();
+    this.mapInstanceToChild.clear();
+    if (!notDefault) {
+      this.defaultJson = JSON.parse(JSON.stringify(data));
+    }
+
+    this.resize(data.width, data.height);
+    await this.replaceBackgroundImage(data.backgroundImage);
+    await this.setBackgroundColor(data.backgroundColor);
+
+    for (let i = 0; i < data.children.length; ++i) {
+      const item = data.children[i];
+      let model = null;
+      if (item.type === "image") {
+        item.config.zIndex = item.zIndex || 0;
+        model = await ImageModel.create(item.config);
+      } else if (item.type === "text") {
+        item.config.zIndex = item.zIndex || 5;
+        model = await TextModel.create(item.config);
+      }
+      model && this.add(model);
+    }
+    setTimeout(() => {
+      this.disableSave = false;
+    });
+  }
+
   // 获取表单项
   getFormObject(): ReturnType<Child["getFormObject"]> {
     return {
@@ -163,6 +277,20 @@ class CanvasModel {
           name: "替换背景图片",
           value: "",
           handler: this.replaceBackgroundImage,
+        },
+        {
+          id: "removeBackgroundImage",
+          type: "button",
+          name: "去除背景图片",
+          value: "",
+          handler: this.removeBackgroundImage,
+        },
+        {
+          id: "setBackgroundColor",
+          type: "color",
+          name: "设置背景颜色",
+          value: this.backgroundColor,
+          handler: this.setBackgroundColor,
         },
         {
           id: "size",
@@ -189,16 +317,50 @@ class CanvasModel {
     } else {
       this.render();
     }
+    this.saveToStack();
+  }
+
+  // 设置背景颜色
+  setBackgroundColor(color: string) {
+    return new Promise<void>((resolve) => {
+      this.instance.setBackgroundColor(color, () => {
+        this.backgroundColor = color;
+        this.render();
+        this.saveToStack();
+        resolve();
+      });
+    });
   }
 
   // 设置背景图片
   replaceBackgroundImage(imageUrl: string) {
-    this.instance.setBackgroundImage(imageUrl, () => {
-      this.backgroundImage = imageUrl;
-      const image = this.instance.backgroundImage as fabric.Image;
-      const { width = 1, height = 1 } = image;
-      image.scaleX = this.width / width;
-      image.scaleY = this.height / height;
+    if (imageUrl === "") {
+      return this.removeBackgroundImage();
+    }
+
+    return new Promise<void>((resolve) => {
+      this.instance.setBackgroundImage(
+        imageUrl,
+        () => {
+          this.backgroundImage = imageUrl;
+          const image = this.instance.backgroundImage as fabric.Image;
+          const { width = 1, height = 1 } = image;
+          image.scaleX = this.width / width;
+          image.scaleY = this.height / height;
+          this.render();
+          this.saveToStack();
+          resolve();
+        },
+        { crossOrigin: "anonymous" }
+      );
+    });
+  }
+
+  // 移除背景图片
+  removeBackgroundImage() {
+    this.instance.setBackgroundImage(null as any, () => {
+      this.backgroundImage = "";
+      this.saveToStack();
       this.render();
     });
   }
@@ -206,20 +368,26 @@ class CanvasModel {
   // 获取选中的组件
   getSelected() {
     const objs = this.instance.getActiveObjects();
-    const selectedChildren = this.children.filter(
-      (child) => objs.indexOf(child.instance) >= 0
-    );
-
+    const selectedChildren: Child[] = [];
+    objs.forEach((obj) => {
+      const child = this.mapInstanceToChild.get(obj);
+      if (child) {
+        selectedChildren.push(child);
+      }
+    });
     return selectedChildren;
   }
 
   // 添加组件
-  add(item: Child) {
-    item.id = this.generateId();
-    const index = this.binarySearch(item.zIndex);
-    this.children.splice(index, 0, item);
-    this.instance.add(item.instance);
-    item.instance.moveTo(index);
+  add(child: Child) {
+    child.id = this.generateId();
+    const index = this.binarySearch(child.zIndex);
+    this.children.splice(index, 0, child);
+    this.instance.add(child.instance);
+    child.instance.moveTo(index);
+    this.mapIdToChild.set(child.id, child);
+    this.mapInstanceToChild.set(child.instance, child);
+    this.saveToStack();
   }
 
   // 改变某个组件的层级
@@ -235,45 +403,78 @@ class CanvasModel {
 
   // 删除所有选中组件
   del() {
-    const objs = this.instance.getActiveObjects();
-    this.children = this.children.filter(
-      (child) => objs.indexOf(child.instance) === -1
-    );
-    this.instance.remove(...objs);
+    const selectedChildren = this.getSelected();
+    this.children = this.children.filter((child) => {
+      if (selectedChildren.indexOf(child) >= 0) {
+        this.instance.remove(child.instance);
+        this.mapIdToChild.delete(child.id);
+        this.mapInstanceToChild.delete(child.instance);
+        return false;
+      }
+      return true;
+    });
     this.instance.discardActiveObject();
     this.render();
     this.onSelect();
+    this.saveToStack();
   }
 
   // 撤销
-  undo() {
-    Toast.show("Todo: 撤销");
+  async undo() {
+    if (this.operateStack.length === 0) {
+      return;
+    }
+
+    this.operateStack2.push(this.operateStack.pop()!);
+    const data = this.operateStack.slice(-1)[0] || this.defaultJson;
+    this.emitStackStatus();
+
+    this.loadFromJson(data as any);
   }
 
   // 重做
-  redo() {
-    Toast.show("Todo: 重做");
+  async redo() {
+    if (this.operateStack2.length === 0) {
+      return;
+    }
+
+    const data = this.operateStack2.pop()!;
+    this.operateStack.push(data);
+    this.emitStackStatus();
+
+    this.loadFromJson(data as any);
   }
 
   // 保存为图片
-  toImage() {
+  async toImage(smallSize?: boolean) {
     const base64String = this.instance.toDataURL();
-    const a = document.createElement("a");
-    a.href = base64String;
-    a.download = `image-${Date.now()}.png`;
-    a.click();
+    if (smallSize) {
+      const canvas = document.createElement("canvas");
+      canvas.width = this.width / 4;
+      canvas.height = this.height / 4;
+      const ctx = canvas.getContext("2d")!;
+      const image = new Image();
+      image.src = base64String;
+      await new Promise<any>((resolve) => {
+        image.onload = resolve;
+      });
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/png");
+    }
+
+    return base64String;
   }
 
   // 保存为 json
-  toJson(local = false) {
+  toJson(local?: boolean) {
     const data = {
       type: "canvas",
       width: this.width,
       height: this.height,
       backgroundImage: this.backgroundImage,
-      chidren: this.children.map((child) => child.getData()),
+      backgroundColor: this.backgroundColor,
+      children: this.children.map((child) => child.getData()),
     };
-    console.log("data", data);
 
     if (local) {
       const blob = new Blob([JSON.stringify(data)], {
@@ -296,7 +497,10 @@ class CanvasModel {
 
   destroy() {
     this.children = [];
+    this.mapIdToChild.clear();
+    this.mapInstanceToChild.clear();
     this.instance.dispose();
+    EventBus.off("save-to-stack", this.saveToStack);
   }
 }
 

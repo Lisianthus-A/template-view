@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@webtoon/psd": "^0.3.0",
     "classnames": "^2.3.2",
     "fabric": "^5.3.0",
     "react": "^18.2.0",

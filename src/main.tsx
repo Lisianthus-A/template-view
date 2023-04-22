@@ -5,7 +5,5 @@ import "../lib/iconfont.js";
 import "./global.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
+  <App />
 );

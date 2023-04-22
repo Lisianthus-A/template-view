@@ -2,6 +2,7 @@ import { fabric } from "fabric";
 import { Toast } from "@/components";
 import { canvasRef } from "@/store";
 import { BaseModel } from "@/models";
+import EventBus from "@/utils/event";
 
 interface Config {
   imageUrl: string;
@@ -11,13 +12,15 @@ interface Config {
   height?: number;
   radius?: number;
   angle?: number;
+  zIndex?: number;
 }
 
 const defaultConfig = {
-  x: 100,
-  y: 100,
+  x: 0,
+  y: 0,
   radius: 0,
   angle: 0,
+  zIndex: 0,
 };
 
 class ImageModel extends BaseModel {
@@ -32,6 +35,7 @@ class ImageModel extends BaseModel {
 
     this.instance = instance;
     this.config = config;
+    this.zIndex = config.zIndex;
 
     this.replaceImage = this.replaceImage.bind(this);
     this.setRadius = this.setRadius.bind(this);
@@ -43,50 +47,53 @@ class ImageModel extends BaseModel {
     console.log("ImageModel", this);
   }
 
-  static create(_config: Config) {
-    return new Promise<ImageModel>((resolve) => {
-      const img = document.createElement("img");
-      img.src = _config.imageUrl;
-      img.onload = () => {
-        const { width, height } = img;
-        const config = Object.assign(
-          {},
-          defaultConfig,
-          { width, height },
-          _config
-        );
-        // 使用图片原尺寸生成 fabric 实例
-        const imageConfig = {
-          width,
-          height,
-          left: config.x,
-          top: config.y,
+  static async create(_config: Config & { imageData?: ImageData }) {
+    if (_config.imageUrl === "" && _config.imageData) {
+      const canvas = document.createElement("canvas");
+      canvas.width = _config.imageData.width;
+      canvas.height = _config.imageData.height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.putImageData(_config.imageData, 0, 0);
+      _config.imageUrl = canvas.toDataURL();
+    }
+    const img = document.createElement("img");
+    img.src = _config.imageUrl;
+    img.crossOrigin = "anonymous";
+    img.onerror = (err) => {
+      Toast.show("图片加载失败");
+      console.log("img onerror:", err);
+    };
+    await new Promise((resolve) => {
+      img.onload = resolve;
+    });
+
+    const { width, height } = img;
+    const config = Object.assign({}, defaultConfig, { width, height }, _config);
+    // 使用图片原尺寸生成 fabric 实例
+    const imageConfig = {
+      width,
+      height,
+      left: config.x,
+      top: config.y,
+      angle: config.angle,
+      crossOrigin: "anonymous",
+    };
+    return await new Promise<ImageModel>((resolve) => {
+      const instance = new fabric.Image(img, imageConfig);
+      resolve(
+        new ImageModel(instance, {
+          imageUrl: config.imageUrl,
+          x: config.x,
+          y: config.y,
+          width: config.width,
+          height: config.height,
+          radius: config.radius,
           angle: config.angle,
-        };
-        fabric.Image.fromURL(
-          _config.imageUrl,
-          (instance) => {
-            instance.lockScalingFlip = true;
-            const model = new ImageModel(instance, {
-              imageUrl: config.imageUrl,
-              x: config.x,
-              y: config.y,
-              width: config.width,
-              height: config.height,
-              radius: config.radius,
-              angle: config.angle,
-              originWidth: width,
-              originHeight: height,
-            });
-            resolve(model);
-          },
-          imageConfig
-        );
-      };
-      img.onerror = (err) => {
-        Toast.show("图片加载失败");
-        console.log("img onerror:", err);
-      };
+          originWidth: width,
+          originHeight: height,
+          zIndex: config.zIndex || 0,
+        })
+      );
     });
   }
 
@@ -123,7 +130,6 @@ class ImageModel extends BaseModel {
     if (!canvas) {
       return;
     }
-    debugger;
 
     radius = radius >> 0;
     this.config.radius = radius;
@@ -141,6 +147,7 @@ class ImageModel extends BaseModel {
         top: -this.originHeight / 2,
       })
     );
+    EventBus.emit("save-to-stack");
     canvas.render();
   }
 
@@ -156,11 +163,13 @@ class ImageModel extends BaseModel {
       img.src = imageUrl;
       img.onload = () => {
         const { width, height } = img;
+        this.config.imageUrl = imageUrl;
         this.instance.setSrc(imageUrl, () => {
           this.originWidth = width;
           this.originHeight = height;
           this.setScale(this.config.width, this.config.height);
           this.setRadius(this.config.radius);
+          EventBus.emit("save-to-stack");
           resolve();
         });
       };
@@ -175,8 +184,6 @@ class ImageModel extends BaseModel {
   getData() {
     return {
       type: "image",
-      originWidth: this.originWidth,
-      originHeight: this.originHeight,
       zIndex: this.zIndex,
       config: this.config,
     };

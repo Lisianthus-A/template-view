@@ -1,6 +1,7 @@
 import { fabric } from "fabric";
 import { canvasRef } from "@/store";
 import EventBus from "@/utils/event";
+import { Toast } from "@/components";
 
 interface Config {
   x?: number;
@@ -8,6 +9,7 @@ interface Config {
   width?: number;
   height?: number;
   angle?: number;
+  zIndex?: number;
 }
 
 class BaseModel {
@@ -35,14 +37,19 @@ class BaseModel {
     this.updateConfig = this.updateConfig.bind(this);
     this.setPosition = this.setPosition.bind(this);
     this.setScale = this.setScale.bind(this);
+    this.resetSize = this.resetSize.bind(this);
     this.setAngle = this.setAngle.bind(this);
     this.setZIndex = this.setZIndex.bind(this);
+    this.remove = this.remove.bind(this);
     this.instance.on("moving", this.updateConfig);
     this.instance.on("scaling", this.updateConfig);
     this.instance.on("rotating", this.updateConfig);
 
     setTimeout(() => {
       this.setScale(config.width, config.height);
+      if (config.zIndex > 0) {
+        this.setZIndex(config.zIndex);
+      }
     });
   }
 
@@ -62,6 +69,7 @@ class BaseModel {
     this.config.height = this.originHeight * scaleY;
     this.config.angle = angle;
     EventBus.emit("update-config");
+    EventBus.emit("save-to-stack");
   }
 
   protected getBaseFormItems() {
@@ -84,6 +92,13 @@ class BaseModel {
         handler: this.setScale,
       },
       {
+        id: `${this.id}-resize`,
+        type: "button",
+        name: "重置大小",
+        value: "",
+        handler: this.resetSize,
+      },
+      {
         id: `${this.id}-angle`,
         type: "range",
         name: "旋转角度",
@@ -99,6 +114,13 @@ class BaseModel {
         value: this.zIndex,
         handler: this.setZIndex,
       },
+      {
+        id: `${this.id}-remove`,
+        type: "button",
+        name: "移除组件",
+        value: "",
+        handler: this.remove,
+      },
     ];
   }
 
@@ -113,6 +135,8 @@ class BaseModel {
     this.config.y = y;
     this.instance.set("left", x);
     this.instance.set("top", y);
+    EventBus.emit("save-to-stack");
+
     canvas.render();
   }
 
@@ -130,6 +154,24 @@ class BaseModel {
     this.instance.set("scaleX", scaleX);
     this.instance.set("scaleY", scaleY);
     this.instance.setCoords();
+    EventBus.emit("save-to-stack");
+
+    canvas.render();
+  }
+
+  // 重置大小
+  resetSize() {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    this.config.width = this.originWidth;
+    this.config.height = this.originHeight;
+    this.instance.set("scaleX", 1);
+    this.instance.set("scaleY", 1);
+    this.instance.setCoords();
+    this.updateConfig();
 
     canvas.render();
   }
@@ -144,6 +186,7 @@ class BaseModel {
     angle = angle >> 0;
     this.config.angle = angle;
     this.instance.set("angle", angle);
+    EventBus.emit("save-to-stack");
 
     canvas.render();
   }
@@ -158,7 +201,20 @@ class BaseModel {
     zIndex = zIndex >> 0;
     this.zIndex = zIndex;
     canvas.changeZIndex(this as any);
+    EventBus.emit("save-to-stack");
+
     canvas.render();
+  }
+
+  // 移除组件
+  remove() {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    Toast.show("使用快捷键 Del 更方便哦~");
+    canvas.del();
   }
 }
 

@@ -30,3 +30,7 @@ export const debounce = (fn: Function, ms: number) => {
     }, ms) as any;
   };
 };
+
+export const delay = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
