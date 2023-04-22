@@ -1,0 +1,24 @@
+name: deploy
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-delpoy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - run: npm install -g pnpm
+    - run: pnpm install
+    - run: pnpm run build
+
+    - name: Delpoy
+      uses: peaceiris/actions-gh-pages@v2.5.0
+      env: 
+        ACTIONS_DEPLOY_KEY: ${{secrets.publish}}
+        PUBLISH_BRANCH: gh-pages
+        PUBLISH_DIR: dist
