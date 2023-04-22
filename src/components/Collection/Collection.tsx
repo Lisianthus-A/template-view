@@ -117,6 +117,7 @@ function Collection({
   dropdownListGenerator,
 }: Props) {
   const fullItemsRef = useRef<ShowItem[]>(type === "text" ? [textItem] : items);
+  const disabledRef = useRef(false);
   const [showItems, setShowItems] = useState<ShowItem[]>(
     type === "text" ? [textItem] : items
   );
@@ -126,9 +127,11 @@ function Collection({
   const handleItemClick = useCallback(
     async (item: Item, pos?: Record<"x" | "y", number>) => {
       const canvas = canvasRef.current;
-      if (!canvas) {
+      if (!canvas || disabledRef.current) {
         return;
       }
+      disabledRef.current = true;
+
       if (type === "text") {
         const config = {
           ...item.data,
@@ -138,11 +141,9 @@ function Collection({
         delete config.width;
         delete config.height;
         const model = await TextModel.create(config);
+        disabledRef.current = false;
         canvas.add(model);
-        return;
-      }
-
-      if (item.type === "template") {
+      } else if (item.type === "template") {
         location.replace(`${location.origin}?id=${item.id}`);
       } else if (item.type === "material") {
         if (item.tag === "背景") {
@@ -170,6 +171,8 @@ function Collection({
           }
         }
       }
+
+      disabledRef.current = false;
     },
     [type]
   );
