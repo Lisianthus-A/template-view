@@ -9,6 +9,7 @@ import type { DragEvent } from "react";
 
 interface Props {
   type: "template" | "material" | "text" | "custom";
+  noLimit?: boolean;
   showDropdown?: boolean;
   showSearch?: boolean;
   items?: ShowItem[];
@@ -110,6 +111,7 @@ const textItem: ShowItem = {
 
 function Collection({
   type,
+  noLimit = false,
   showSearch = true,
   showDropdown = true,
   items = [],
@@ -254,7 +256,9 @@ function Collection({
       {showItems.length === 0 && <div className="no-data">暂无数据</div>}
       {showItems.map((showItem, index) => {
         const items =
-          isShowMore || isSearch ? showItem.items : showItem.items.slice(0, 4);
+          noLimit || isShowMore || isSearch
+            ? showItem.items
+            : showItem.items.slice(0, 4);
 
         return (
           <div className="collection" key={index}>
@@ -284,7 +288,16 @@ function Collection({
                 <div
                   className="collection-item"
                   key={item.id}
-                  onClick={() => handleItemClick(item)}
+                  onClick={(evt) => {
+                    if ((evt.target as HTMLElement).nodeName === "svg") {
+                      return;
+                    }
+                    if ((evt.target as HTMLElement).classList.contains("collection-dropdown")) {
+                      return;
+                    }
+
+                    handleItemClick(item);
+                  }}
                 >
                   {showDropdown && (
                     <Dropdown
@@ -293,12 +306,12 @@ function Collection({
                         dropdownListGenerator
                           ? dropdownListGenerator(item)
                           : [
-                              {
-                                icon: "icon-heart-fill",
-                                text: "收藏",
-                                checked: item.isFav,
-                              },
-                            ]
+                            {
+                              icon: "icon-heart-fill",
+                              text: "收藏",
+                              checked: item.isFav,
+                            },
+                          ]
                       }
                       onItemClick={(dItem) => handleDropdownClick(dItem, item)}
                     />
