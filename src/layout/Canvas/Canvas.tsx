@@ -70,6 +70,7 @@ function Canvas() {
     };
 
     const stopPropagation = (evt: MouseEvent) => {
+      document.body.click();
       evt.stopPropagation();
     };
 
