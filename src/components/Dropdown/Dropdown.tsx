@@ -35,13 +35,14 @@ function Dropdown({ className, style, list, onItemClick }: Props) {
   }, []);
 
   const handleWrapperClick = (evt: MouseEvent) => {
-    evt.stopPropagation();
     if (visible) {
       closeFunc();
     } else {
       updatePosition();
       setVisible(true);
-      window.addEventListener("click", closeFunc);
+      setTimeout(() => {
+        window.addEventListener("click", closeFunc);
+      });
     }
   };
 
