@@ -1,6 +1,5 @@
 import { fabric } from "fabric";
 import { canvasRef } from "@/store";
-import EventBus from "@/utils/event";
 import BaseModel from "./BaseModel";
 
 interface Config {
@@ -124,6 +123,11 @@ class TextModel extends BaseModel {
   }
 
   private updateTextConfig() {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
     const {
       text = "",
       width = 0,
@@ -137,7 +141,7 @@ class TextModel extends BaseModel {
     this.config.width = width * scaleX;
     this.config.height = height * scaleY;
     this.config.text = text;
-    EventBus.emit("update-config");
+    canvas.emitUpdateConfig();
   }
 
   // 设置文本内容
@@ -150,7 +154,7 @@ class TextModel extends BaseModel {
     this.instance.set("text", text);
 
     this.updateTextConfig();
-    EventBus.emit("save-to-stack");
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -165,7 +169,7 @@ class TextModel extends BaseModel {
     this.instance.set("fontFamily", fontFamily);
 
     this.updateTextConfig();
-    EventBus.emit("save-to-stack");
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -182,7 +186,7 @@ class TextModel extends BaseModel {
     }
 
     this.updateTextConfig();
-    EventBus.emit("save-to-stack");
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -202,7 +206,7 @@ class TextModel extends BaseModel {
       (p) => {
         this.config.pattern = imageUrl;
         this.instance.set("fill", p);
-        EventBus.emit("save-to-stack");
+        canvas.saveToStack();
         canvas.render();
       }
     );
@@ -217,7 +221,7 @@ class TextModel extends BaseModel {
 
     this.config.pattern = "";
     this.instance.set("fill", this.config.color);
-    EventBus.emit("save-to-stack");
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -232,7 +236,7 @@ class TextModel extends BaseModel {
     this.instance.set("stroke", color);
 
     this.updateTextConfig();
-    EventBus.emit("save-to-stack");
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -247,7 +251,7 @@ class TextModel extends BaseModel {
     this.instance.set("fontSize", size);
 
     this.updateTextConfig();
-    EventBus.emit("save-to-stack");
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -280,7 +284,7 @@ class TextModel extends BaseModel {
     }
 
     this.updateTextConfig();
-    EventBus.emit("save-to-stack");
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -300,7 +304,7 @@ class TextModel extends BaseModel {
     }
 
     this.updateTextConfig();
-    EventBus.emit("save-to-stack");
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -315,7 +319,7 @@ class TextModel extends BaseModel {
     this.instance.set("underline", this.config.underline);
 
     this.updateTextConfig();
-    EventBus.emit("save-to-stack");
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -330,7 +334,7 @@ class TextModel extends BaseModel {
     this.instance.set("linethrough", this.config.linethrough);
 
     this.updateTextConfig();
-    EventBus.emit("save-to-stack");
+    canvas.saveToStack();
     canvas.render();
   }
 

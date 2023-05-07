@@ -1,0 +1,16 @@
+.select {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+
+  :global {
+    .name {
+      margin-bottom: 8px;
+      padding: 0 16px;
+    }
+
+    .com-select {
+      padding: 0 16px;
+    }
+  }
+}

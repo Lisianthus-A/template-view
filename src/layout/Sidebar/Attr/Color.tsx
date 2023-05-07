@@ -1,5 +1,5 @@
 import styles from "./Color.module.scss";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SketchPicker } from "react-color";
 import { MouseEvent } from "react";
 import type { ColorResult } from "react-color";
@@ -21,7 +21,6 @@ function Color({ item }: Props) {
     const { r, g, b, a } = color.rgb;
     const rgba = `rgba(${r}, ${g}, ${b}, ${a})`;
     handler(rgba);
-    setColor(rgba);
   };
 
   const toggleVisible = (evt: MouseEvent) => {
@@ -37,6 +36,10 @@ function Color({ item }: Props) {
 
     setVisible(!visible);
   };
+
+  useEffect(() => {
+    setColor(value);
+  }, [value]);
 
   return (
     <div className={styles.color}>

@@ -11,3 +11,4 @@ export { default as Collection } from "./Collection/Collection";
 export { default as Tabs } from "./Tabs/Tabs";
 export { default as ScrollText } from "./ScrollText/ScrollText";
 export { default as Dropdown } from "./Dropdown/Dropdown";
+export { default as Switch } from "./Switch/Switch";

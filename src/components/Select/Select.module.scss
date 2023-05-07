@@ -31,7 +31,7 @@
 .options {
   padding: 4px;
   position: absolute;
-  max-height: 320px;
+  max-height: 200px;
   background-color: #fff;
   z-index: 103;
   user-select: none;
@@ -40,6 +40,19 @@
     0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
   border-radius: 8px;
   overflow: auto;
+}
+
+.options::-webkit-scrollbar {
+  width: 8px;
+}
+
+.options::-webkit-scrollbar-thumb {
+  background-color: #aaa;
+  border-radius: 4px;
+
+  &:hover {
+    background-color: #666;
+  }
 }
 
 .option {

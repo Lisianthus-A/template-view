@@ -9,6 +9,7 @@ import Attr from "./Attr";
 import Material from "./Material";
 import Text from "./Text";
 import My from "./My";
+import Shape from "./Shape";
 
 const tabs = [
   {
@@ -20,6 +21,11 @@ const tabs = [
     id: "material",
     iconType: "icon-material",
     text: "素材",
+  },
+  {
+    id: "shape",
+    iconType: "icon-shape",
+    text: "图形",
   },
   {
     id: "text",
@@ -41,7 +47,7 @@ const tabs = [
 function Sidebar() {
   const [currentTab, setCurrentTab] = useState("template");
 
-  const handleTabClick = (tabItem: typeof tabs[number]) => {
+  const handleTabClick = (tabItem: (typeof tabs)[number]) => {
     setCurrentTab(tabItem.id);
   };
 
@@ -86,6 +92,7 @@ function Sidebar() {
         {currentTab === "template" && <Template />}
         {currentTab === "material" && <Material />}
         {currentTab === "text" && <Text />}
+        {currentTab === "shape" && <Shape />}
         {currentTab === "attr" && <Attr />}
         {currentTab === "my" && <My />}
       </div>

@@ -3,6 +3,7 @@ import classNames from "classnames";
 import type { CSSProperties, MouseEvent } from "react";
 
 export type IconType =
+  | "icon-shape"
   | "icon-edit"
   | "icon-more"
   | "icon-heart"

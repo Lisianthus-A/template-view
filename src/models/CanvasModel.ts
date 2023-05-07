@@ -1,6 +1,6 @@
 import { fabric } from "fabric";
 import EventBus from "@/utils/event";
-import { ImageModel, TextModel } from "@/models";
+import { ImageModel, TextModel, RectModel, PathModel } from "@/models";
 import { canvasRef } from "@/store";
 
 interface Config {
@@ -9,6 +9,7 @@ interface Config {
   height: number;
   backgroundImage?: string;
   backgroundColor?: string;
+  bgFilter?: string;
 }
 
 export interface FormObject {
@@ -42,6 +43,7 @@ class CanvasModel {
   private height: number;
   private backgroundImage: string;
   private backgroundColor: string;
+  private bgFilter: string;
   private disableSave: boolean = true;
   private operateStack: Record<string, any>[] = [];
   private operateStack2: Record<string, any>[] = [];
@@ -54,6 +56,7 @@ class CanvasModel {
     backgroundImage: "",
     backgroundColor: "",
     children: [],
+    bgFilter: "",
   };
 
   constructor(config: Config) {
@@ -65,8 +68,11 @@ class CanvasModel {
     fabric.Object.prototype.borderDashArray = [5, 5];
     fabric.Object.prototype.borderColor = "#0066ff";
     fabric.Object.prototype.lockScalingFlip = true;
+    fabric.Object.prototype.minScaleLimit = 0.2;
     fabric.Group.prototype.lockRotation = true;
     fabric.Image.prototype.lockScalingFlip = true;
+    // fabric.Path.prototype.selectable = false;
+    // fabric.Path.prototype.hoverCursor = "default";
 
     this.mapIdToChild = new Map();
     this.mapInstanceToChild = new Map();
@@ -75,12 +81,15 @@ class CanvasModel {
     this.height = config.height;
     this.backgroundImage = config.backgroundImage || "";
     this.backgroundColor = config.backgroundColor || "";
+    this.bgFilter = config.bgFilter || "";
     this.instance = new fabric.Canvas(config.canvas, {
       width: config.width,
       height: config.height,
       backgroundColor: config.backgroundColor,
       preserveObjectStacking: true,
     });
+    this.instance.freeDrawingBrush.color = "rgba(255,192,203,1)";
+    this.instance.freeDrawingBrush.width = 10;
     this.children = [];
     this.disableSave = false;
 
@@ -89,14 +98,32 @@ class CanvasModel {
     this.replaceBackgroundImage = this.replaceBackgroundImage.bind(this);
     this.removeBackgroundImage = this.removeBackgroundImage.bind(this);
     this.setBackgroundColor = this.setBackgroundColor.bind(this);
+    this.changeBgFilter = this.changeBgFilter.bind(this);
     this.onSelect = this.onSelect.bind(this);
     this.saveToStack = this.saveToStack.bind(this);
     this.emitStackStatus = this.emitStackStatus.bind(this);
     this.instance.on("selection:created", this.onSelect);
     this.instance.on("selection:updated", this.onSelect);
     this.instance.on("selection:cleared", this.onSelect);
-
-    EventBus.on("save-to-stack", this.saveToStack);
+    this.instance.on("path:created", async (evt: any) => {
+      const pathString = evt.path.path.reduce(
+        (acc: any, cur: any) => acc + cur.join(" "),
+        ""
+      );
+      console.log("evt", evt.path);
+      const child = await PathModel.create({
+        path: pathString,
+        x: evt.path.left,
+        y: evt.path.top,
+        width: evt.path.width,
+        height: evt.path.height,
+        strokeWidth: evt.path.strokeWidth,
+        color: evt.path.stroke,
+        shadow: evt.path.shadow,
+      });
+      this.instance.remove(evt.path);
+      this.add(child);
+    });
 
     // 触发一次选中
     setTimeout(this.onSelect);
@@ -117,6 +144,10 @@ class CanvasModel {
   // 选中时某组件时
   private onSelect() {
     EventBus.emit("selection-change");
+  }
+
+  emitUpdateConfig() {
+    EventBus.emit("update-config");
   }
 
   // 二分查找给定 zIndex 应插入的位置
@@ -146,7 +177,7 @@ class CanvasModel {
   }
 
   // 操作数据保存
-  private saveToStack() {
+  saveToStack() {
     if (this.disableSave) {
       return;
     }
@@ -180,6 +211,7 @@ class CanvasModel {
       canvas,
       width: data.width,
       height: data.height,
+      bgFilter: "",
     });
 
     await canvasModel.loadFromJson(data, false);
@@ -206,6 +238,7 @@ class CanvasModel {
     this.resize(data.width, data.height);
     await this.replaceBackgroundImage(data.backgroundImage);
     await this.setBackgroundColor(data.backgroundColor);
+    this.changeBgFilter(data.bgFilter);
 
     for (let i = 0; i < data.children.length; ++i) {
       const item = data.children[i];
@@ -216,6 +249,12 @@ class CanvasModel {
       } else if (item.type === "text") {
         item.config.zIndex = item.zIndex || 5;
         model = await TextModel.create(item.config);
+      } else if (item.type === "rect") {
+        item.config.zIndex = item.zIndex || 2;
+        model = await RectModel.create(item.config);
+      } else if (item.type === "path") {
+        item.config.zIndex = item.zIndex || 4;
+        model = await PathModel.create(item.config);
       }
       model && this.add(model);
     }
@@ -250,6 +289,23 @@ class CanvasModel {
           name: "设置背景颜色",
           value: this.backgroundColor,
           handler: this.setBackgroundColor,
+        },
+        {
+          id: "bgFilter",
+          type: "select",
+          name: "背景图滤镜",
+          options: [
+            { value: "", text: "原图" },
+            { value: "Grayscale", text: "灰度" },
+            { value: "Invert", text: "反色" },
+            { value: "Sepia", text: "复古" },
+            { value: "Vintage", text: "怀旧" },
+            { value: "Kodachrome", text: "彩色" },
+            { value: "Pixelate", text: "像素化" },
+            { value: "Polaroid", text: "宝丽来" },
+          ],
+          value: this.bgFilter || "",
+          handler: this.changeBgFilter,
         },
         {
           id: "size",
@@ -287,6 +343,7 @@ class CanvasModel {
       this.instance.setBackgroundColor(color, () => {
         this.backgroundColor = color;
         this.render();
+        this.emitUpdateConfig();
         this.saveToStack();
         resolve();
       });
@@ -308,9 +365,12 @@ class CanvasModel {
           const { width = 1, height = 1 } = image;
           image.scaleX = this.width / width;
           image.scaleY = this.height / height;
-          this.render();
+          if (this.bgFilter) {
+            this.changeBgFilter(this.bgFilter);
+          }
           this.saveToStack();
           resolve();
+          this.render();
         },
         { crossOrigin: "anonymous" }
       );
@@ -324,6 +384,24 @@ class CanvasModel {
       this.saveToStack();
       this.render();
     });
+  }
+
+  // 改变背景滤镜
+  changeBgFilter(filter: string) {
+    this.bgFilter = filter || "";
+    if (!this.backgroundImage) {
+      this.emitUpdateConfig();
+      return;
+    }
+    const bg = this.instance.backgroundImage as fabric.Image;
+    bg.applyFilters(
+      // @ts-ignore
+      this.bgFilter ? [new fabric.Image.filters[this.bgFilter]()] : []
+    );
+
+    this.render();
+    this.emitUpdateConfig();
+    this.saveToStack();
   }
 
   // 获取选中的组件
@@ -345,6 +423,9 @@ class CanvasModel {
     const index = this.binarySearch(child.zIndex);
     this.children.splice(index, 0, child);
     this.instance.add(child.instance);
+    if (this.bgFilter) {
+      this.changeBgFilter(this.bgFilter);
+    }
     child.instance.moveTo(index);
     this.mapIdToChild.set(child.id, child);
     this.mapInstanceToChild.set(child.instance, child);
@@ -390,7 +471,8 @@ class CanvasModel {
     const data = this.operateStack.slice(-1)[0] || this.defaultJson;
     this.emitStackStatus();
 
-    this.loadFromJson(data as any);
+    await this.loadFromJson(data as any);
+    this.emitUpdateConfig();
   }
 
   // 重做
@@ -403,7 +485,8 @@ class CanvasModel {
     this.operateStack.push(data);
     this.emitStackStatus();
 
-    this.loadFromJson(data as any);
+    await this.loadFromJson(data as any);
+    this.emitUpdateConfig();
   }
 
   // 保存为图片
@@ -434,6 +517,7 @@ class CanvasModel {
       height: this.height,
       backgroundImage: this.backgroundImage,
       backgroundColor: this.backgroundColor,
+      bgFilter: this.bgFilter,
       children: this.children.map((child) => child.getData()),
     };
 
@@ -461,7 +545,6 @@ class CanvasModel {
     this.mapIdToChild.clear();
     this.mapInstanceToChild.clear();
     this.instance.dispose();
-    EventBus.off("save-to-stack", this.saveToStack);
   }
 }
 

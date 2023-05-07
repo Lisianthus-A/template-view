@@ -1,6 +1,5 @@
 import { fabric } from "fabric";
 import { canvasRef } from "@/store";
-import EventBus from "@/utils/event";
 import { Toast } from "@/components";
 
 interface Config {
@@ -55,6 +54,11 @@ class BaseModel {
 
   // 移动、缩放、旋转组件时更新配置
   updateConfig() {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
     const {
       left = 0,
       top = 0,
@@ -68,8 +72,8 @@ class BaseModel {
     this.config.width = this.originWidth * scaleX;
     this.config.height = this.originHeight * scaleY;
     this.config.angle = angle;
-    EventBus.emit("update-config");
-    EventBus.emit("save-to-stack");
+    canvas.emitUpdateConfig();
+    canvas.saveToStack();
   }
 
   protected getBaseFormItems() {
@@ -135,8 +139,8 @@ class BaseModel {
     this.config.y = y;
     this.instance.set("left", x);
     this.instance.set("top", y);
-    EventBus.emit("save-to-stack");
 
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -154,8 +158,8 @@ class BaseModel {
     this.instance.set("scaleX", scaleX);
     this.instance.set("scaleY", scaleY);
     this.instance.setCoords();
-    EventBus.emit("save-to-stack");
 
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -166,11 +170,7 @@ class BaseModel {
       return;
     }
 
-    this.config.width = this.originWidth;
-    this.config.height = this.originHeight;
-    this.instance.set("scaleX", 1);
-    this.instance.set("scaleY", 1);
-    this.instance.setCoords();
+    this.setScale(this.originWidth, this.originHeight);
     this.updateConfig();
 
     canvas.render();
@@ -186,8 +186,8 @@ class BaseModel {
     angle = angle >> 0;
     this.config.angle = angle;
     this.instance.set("angle", angle);
-    EventBus.emit("save-to-stack");
 
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -201,8 +201,7 @@ class BaseModel {
     zIndex = zIndex >> 0;
     this.zIndex = zIndex;
     canvas.changeZIndex(this as any);
-    EventBus.emit("save-to-stack");
-
+    canvas.saveToStack();
     canvas.render();
   }
 

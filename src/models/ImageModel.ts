@@ -2,7 +2,6 @@ import { fabric } from "fabric";
 import { Toast } from "@/components";
 import { canvasRef } from "@/store";
 import { BaseModel } from "@/models";
-import EventBus from "@/utils/event";
 
 interface Config {
   imageUrl: string;
@@ -13,6 +12,7 @@ interface Config {
   radius?: number;
   angle?: number;
   zIndex?: number;
+  filter?: string;
 }
 
 const defaultConfig = {
@@ -20,7 +20,7 @@ const defaultConfig = {
   y: 0,
   radius: 0,
   angle: 0,
-  zIndex: 0,
+  zIndex: 1,
 };
 
 class ImageModel extends BaseModel {
@@ -39,6 +39,7 @@ class ImageModel extends BaseModel {
 
     this.replaceImage = this.replaceImage.bind(this);
     this.setRadius = this.setRadius.bind(this);
+    this.changeFilter = this.changeFilter.bind(this);
 
     if (config.radius > 0) {
       this.setRadius(config.radius);
@@ -89,6 +90,7 @@ class ImageModel extends BaseModel {
           height: config.height,
           radius: config.radius,
           angle: config.angle,
+          filter: config.filter || "",
           originWidth: width,
           originHeight: height,
           zIndex: config.zIndex || 0,
@@ -113,6 +115,23 @@ class ImageModel extends BaseModel {
           handler: this.replaceImage,
         },
         {
+          id: `${this.id}-filter`,
+          type: "select",
+          name: "滤镜",
+          options: [
+            { value: "", text: "原图" },
+            { value: "Grayscale", text: "灰度" },
+            { value: "Invert", text: "反色" },
+            { value: "Sepia", text: "复古" },
+            { value: "Vintage", text: "怀旧" },
+            { value: "Kodachrome", text: "彩色" },
+            { value: "Pixelate", text: "像素化" },
+            { value: "Polaroid", text: "宝丽来" },
+          ],
+          value: this.config.filter,
+          handler: this.changeFilter,
+        },
+        {
           id: `${this.id}-radius`,
           type: "range",
           name: "圆角",
@@ -122,6 +141,23 @@ class ImageModel extends BaseModel {
         ...baseItems,
       ],
     };
+  }
+
+  changeFilter(filter: string) {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    this.config.filter = filter || "";
+    this.instance.applyFilters(
+      // @ts-ignore
+      this.config.filter ? [new fabric.Image.filters[this.config.filter]()] : []
+    );
+
+    canvas.render();
+    canvas.emitUpdateConfig();
+    canvas.saveToStack();
   }
 
   // 设置圆角
@@ -147,7 +183,7 @@ class ImageModel extends BaseModel {
         top: -this.originHeight / 2,
       })
     );
-    EventBus.emit("save-to-stack");
+    canvas.saveToStack();
     canvas.render();
   }
 
@@ -169,7 +205,10 @@ class ImageModel extends BaseModel {
           this.originHeight = height;
           this.setScale(this.config.width, this.config.height);
           this.setRadius(this.config.radius);
-          EventBus.emit("save-to-stack");
+          if (this.config.filter) {
+            this.changeFilter(this.config.filter);
+          }
+          canvas.saveToStack();
           resolve();
         });
       };

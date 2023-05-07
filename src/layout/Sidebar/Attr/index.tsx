@@ -8,8 +8,9 @@ import UploadImage from "./UploadImage";
 import Range from "./Range";
 import TextArea from "./TextArea";
 import Color from "./Color";
-import type { FormObject } from "@/models/CanvasModel";
 import IconBar from "./IconBar";
+import Select from "./Select";
+import type { FormObject } from "@/models/CanvasModel";
 
 function Attr() {
   const [formObject, setFormObject] = useState<FormObject | null>(null);
@@ -76,6 +77,9 @@ function Attr() {
                 {item.name}
               </Button>
             );
+          }
+          if (item.type === "select") {
+            return <Select key={item.id} item={item} />;
           }
 
           return null;
