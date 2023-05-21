@@ -2,6 +2,7 @@ import { fabric } from "fabric";
 import EventBus from "@/utils/event";
 import { ImageModel, TextModel, RectModel, PathModel } from "@/models";
 import { canvasRef } from "@/store";
+import { debounce } from "@/utils";
 
 interface Config {
   canvas: HTMLCanvasElement;
@@ -32,6 +33,7 @@ interface Child {
   config: Record<string, any>;
   getData(): Record<string, any>;
   getFormObject(): FormObject;
+  updateConfig(): void;
 }
 
 class CanvasModel {
@@ -69,10 +71,7 @@ class CanvasModel {
     fabric.Object.prototype.borderColor = "#0066ff";
     fabric.Object.prototype.lockScalingFlip = true;
     fabric.Object.prototype.minScaleLimit = 0.2;
-    fabric.Group.prototype.lockRotation = true;
     fabric.Image.prototype.lockScalingFlip = true;
-    // fabric.Path.prototype.selectable = false;
-    // fabric.Path.prototype.hoverCursor = "default";
 
     this.mapIdToChild = new Map();
     this.mapInstanceToChild = new Map();
@@ -101,7 +100,13 @@ class CanvasModel {
     this.changeBgFilter = this.changeBgFilter.bind(this);
     this.onSelect = this.onSelect.bind(this);
     this.saveToStack = this.saveToStack.bind(this);
+    this.emitUpdateConfig = debounce(this.emitUpdateConfig.bind(this), 0);
     this.emitStackStatus = this.emitStackStatus.bind(this);
+    this.instance.on("mouse:up", () => {
+      this.children.forEach((child) => {
+        child.updateConfig();
+      });
+    });
     this.instance.on("selection:created", this.onSelect);
     this.instance.on("selection:updated", this.onSelect);
     this.instance.on("selection:cleared", this.onSelect);
@@ -110,7 +115,6 @@ class CanvasModel {
         (acc: any, cur: any) => acc + cur.join(" "),
         ""
       );
-      console.log("evt", evt.path);
       const child = await PathModel.create({
         path: pathString,
         x: evt.path.left,
@@ -509,32 +513,32 @@ class CanvasModel {
     return base64String;
   }
 
-  // 保存为 json
-  toJson(local?: boolean) {
-    const data = {
-      type: "canvas",
-      width: this.width,
-      height: this.height,
-      backgroundImage: this.backgroundImage,
-      backgroundColor: this.backgroundColor,
-      bgFilter: this.bgFilter,
-      children: this.children.map((child) => child.getData()),
-    };
+ // 保存为 json
+ toJson(local?: boolean) {
+  const data = {
+    type: "canvas",
+    width: this.width,
+    height: this.height,
+    backgroundImage: this.backgroundImage,
+    backgroundColor: this.backgroundColor,
+    bgFilter: this.bgFilter,
+    children: this.children.map((child) => child.getData()),
+  };
 
-    if (local) {
-      const blob = new Blob([JSON.stringify(data)], {
-        type: "application/json",
-      });
-      const a = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      a.href = url;
-      a.download = `data-${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    return data;
+  if (local) {
+    const blob = new Blob([JSON.stringify(data)], {
+      type: "application/json",
+    });
+    const a = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = `data-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
+
+  return data;
+}
 
   render() {
     this.instance.renderAll();
