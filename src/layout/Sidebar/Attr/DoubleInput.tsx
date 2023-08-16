@@ -15,18 +15,8 @@ function DoubleInput({ item }: Props) {
 
   const handleChange = (evt: ChangeEvent<HTMLInputElement>, index: number) => {
     let { value } = evt.target;
-    if (value === "") {
-      const newValue = inputValue.slice();
-      newValue[index] = "";
-      setInputValue(newValue);
-      return;
-    }
-
     // 非数字
     if (/[^-\d]/.test(value)) {
-      return;
-    }
-    if (isNaN(Number(value))) {
       return;
     }
 
@@ -37,7 +27,9 @@ function DoubleInput({ item }: Props) {
     const newValue = inputValue.slice();
     newValue[index] = value;
     setInputValue(newValue);
-    handler(...newValue.map(Number));
+    if (value !== "" && !isNaN(Number(value))) {
+      handler(...newValue.map(Number));
+    }
   };
 
   useEffect(() => {
