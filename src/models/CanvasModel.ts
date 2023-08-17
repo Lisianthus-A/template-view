@@ -2,7 +2,7 @@ import { fabric } from "fabric";
 import EventBus from "@/utils/event";
 import { ImageModel, TextModel, RectModel, PathModel } from "@/models";
 import { canvasRef } from "@/store";
-import { debounce } from "@/utils";
+import { debounce, deepClone, deepCompare } from "@/utils";
 
 interface Config {
   canvas: HTMLCanvasElement;
@@ -189,7 +189,12 @@ class CanvasModel {
     clearTimeout(this.timer);
     this.timer = window.setTimeout(() => {
       const data = this.toJson();
-      this.operateStack.push(JSON.parse(JSON.stringify(data)));
+      const lastData = this.operateStack.pop();
+      if (deepCompare(lastData, data)) {
+        return;
+      }
+      const clonedData = deepClone(data);
+      this.operateStack.push(lastData!, clonedData);
       if (this.operateStack.length > CanvasModel.OPERATE_STACK_MAX_LENGTH) {
         this.operateStack.shift();
       }
