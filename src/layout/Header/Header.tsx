@@ -78,29 +78,29 @@ function Header() {
     return shouldSkip;
   };
 
-  const renderByLayers = async (result: Psd) => {
-    if (!canvasRef.current) {
-      return;
-    }
+  // const renderByLayers = async (result: Psd) => {
+  //   if (!canvasRef.current) {
+  //     return;
+  //   }
 
-    const models = [];
-    for (let i = result.layers.length - 1; i >= 0; --i) {
-      const layer = result.layers[i];
-      const u8Array = await layer.composite(true, true);
-      const imageData = new ImageData(u8Array, layer.width, layer.height);
-      const model = await ImageModel.create({
-        imageUrl: "",
-        imageData,
-        x: layer.left,
-        y: layer.top,
-      });
-      models.push(model);
-    }
-    canvasRef.current.resize(result.width, result.height);
-    models.forEach((model) => {
-      canvasRef.current!.add(model);
-    });
-  };
+  //   const models = [];
+  //   for (let i = result.layers.length - 1; i >= 0; --i) {
+  //     const layer = result.layers[i];
+  //     const u8Array = await layer.composite(true, true);
+  //     const imageData = new ImageData(u8Array, layer.width, layer.height);
+  //     const model = await ImageModel.create({
+  //       imageUrl: "",
+  //       imageData,
+  //       x: layer.left,
+  //       y: layer.top,
+  //     });
+  //     models.push(model);
+  //   }
+  //   canvasRef.current.resize(result.width, result.height);
+  //   models.forEach((model) => {
+  //     canvasRef.current!.add(model);
+  //   });
+  // };
 
   const renderByGroups = async (result: Psd) => {
     if (!canvasRef.current) {

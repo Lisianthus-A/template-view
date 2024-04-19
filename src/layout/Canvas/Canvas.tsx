@@ -60,7 +60,7 @@ function Canvas() {
         return;
       }
 
-      if (evt.ctrlKey) {
+      if (evt.ctrlKey || evt.metaKey) {
         if (key === "Z") {
           canvas.undo();
         } else if (key === "Y") {
