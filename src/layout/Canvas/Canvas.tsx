@@ -4,10 +4,12 @@ import { CanvasModel } from "@/models";
 import EventBus from "@/utils/event";
 import { canvasRef as storeCanvasRef } from "@/store";
 import styles from "./Canvas.module.scss";
+import type { MouseEvent as ReactMouseEvent } from "react";
 
 function Canvas() {
   const canvasData = useContext(CanvasDataContext);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const previewRef = useRef<HTMLDivElement | null>(null);
 
   const handleClick = () => {
     const canvas = storeCanvasRef.current;
@@ -16,6 +18,50 @@ function Canvas() {
       canvas.render();
       EventBus.emit("selection-change");
     }
+  };
+
+  const handleMouseDown = (evt: ReactMouseEvent, type: string) => {
+    const el = previewRef.current;
+    const canvas = storeCanvasRef.current;
+    if (!el || !canvas) {
+      return;
+    }
+    evt.preventDefault();
+
+    const size = canvas.getSize();
+    const initPos = { x: evt.pageX, y: evt.pageY };
+    const allowX = type.indexOf("r") >= 0;
+    const allowY = type.indexOf("b") >= 0;
+
+    const onMouseMove = (evt: MouseEvent) => {
+      const width = allowX
+        ? Math.max(0, size.width + evt.pageX - initPos.x)
+        : size.width;
+      const height = allowY
+        ? Math.max(0, size.height + evt.pageY - initPos.y)
+        : size.height;
+      el.style.setProperty("width", `${width}px`);
+      el.style.setProperty("height", `${height}px`);
+    };
+    const onMouseUp = (evt: MouseEvent) => {
+      const width = allowX
+        ? Math.max(0, size.width + evt.pageX - initPos.x)
+        : size.width;
+      const height = allowY
+        ? Math.max(0, size.height + evt.pageY - initPos.y)
+        : size.height;
+      canvas.resize(width, height);
+
+      el.style.setProperty("display", "none");
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    el.style.setProperty("display", "block");
+    el.style.setProperty("width", `${size.width}px`);
+    el.style.setProperty("height", `${size.height}px`);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
   };
 
   useLayoutEffect(() => {
@@ -106,7 +152,21 @@ function Canvas() {
 
   return (
     <div className={styles.canvas} onClick={handleClick}>
-      <div id="grid" className="gap" />
+      <div id="grid" className="gap">
+        <div ref={previewRef} className={styles["resize-preview"]} />
+        <div
+          className={styles["block-r"]}
+          onMouseDown={(evt) => handleMouseDown(evt, "r")}
+        />
+        <div
+          className={styles["block-b"]}
+          onMouseDown={(evt) => handleMouseDown(evt, "b")}
+        />
+        <div
+          className={styles["block-br"]}
+          onMouseDown={(evt) => handleMouseDown(evt, "br")}
+        />
+      </div>
       <canvas className="gap" ref={canvasRef} />
     </div>
   );

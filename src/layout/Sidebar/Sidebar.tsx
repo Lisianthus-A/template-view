@@ -8,7 +8,7 @@ import styles from "./Sidebar.module.scss";
 import Attr from "./Attr";
 import Material from "./Material";
 import Text from "./Text";
-import My from "./My";
+// import My from "./My";
 import Shape from "./Shape";
 
 const tabs = [
@@ -37,11 +37,11 @@ const tabs = [
     iconType: "icon-attr",
     text: "属性",
   },
-  {
-    id: "my",
-    iconType: "icon-my",
-    text: "我的",
-  },
+  // {
+  //   id: "my",
+  //   iconType: "icon-my",
+  //   text: "我的",
+  // },
 ];
 
 function Sidebar() {
@@ -94,7 +94,7 @@ function Sidebar() {
         {currentTab === "text" && <Text />}
         {currentTab === "shape" && <Shape />}
         {currentTab === "attr" && <Attr />}
-        {currentTab === "my" && <My />}
+        {/* {currentTab === "my" && <My />} */}
       </div>
     </div>
   );

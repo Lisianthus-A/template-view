@@ -93,6 +93,7 @@ class CanvasModel {
     this.disableSave = false;
 
     this.loadFromJson = this.loadFromJson.bind(this);
+    this.getSize = this.getSize.bind(this);
     this.resize = this.resize.bind(this);
     this.replaceBackgroundImage = this.replaceBackgroundImage.bind(this);
     this.removeBackgroundImage = this.removeBackgroundImage.bind(this);
@@ -328,6 +329,14 @@ class CanvasModel {
     };
   }
 
+  // 获取当前宽高
+  getSize() {
+    return {
+      width: this.width,
+      height: this.height,
+    };
+  }
+
   // 设置宽高
   resize(width: number, height: number) {
     this.width = width;
@@ -518,32 +527,32 @@ class CanvasModel {
     return base64String;
   }
 
- // 保存为 json
- toJson(local?: boolean) {
-  const data = {
-    type: "canvas",
-    width: this.width,
-    height: this.height,
-    backgroundImage: this.backgroundImage,
-    backgroundColor: this.backgroundColor,
-    bgFilter: this.bgFilter,
-    children: this.children.map((child) => child.getData()),
-  };
+  // 保存为 json
+  toJson(local?: boolean) {
+    const data = {
+      type: "canvas",
+      width: this.width,
+      height: this.height,
+      backgroundImage: this.backgroundImage,
+      backgroundColor: this.backgroundColor,
+      bgFilter: this.bgFilter,
+      children: this.children.map((child) => child.getData()),
+    };
 
-  if (local) {
-    const blob = new Blob([JSON.stringify(data)], {
-      type: "application/json",
-    });
-    const a = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    a.href = url;
-    a.download = `data-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    if (local) {
+      const blob = new Blob([JSON.stringify(data)], {
+        type: "application/json",
+      });
+      const a = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = `data-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    return data;
   }
-
-  return data;
-}
 
   render() {
     this.instance.renderAll();
