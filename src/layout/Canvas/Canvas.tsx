@@ -21,12 +21,12 @@ function Canvas() {
   };
 
   const handleMouseDown = (evt: ReactMouseEvent, type: string) => {
+    evt.preventDefault();
     const el = previewRef.current;
     const canvas = storeCanvasRef.current;
     if (!el || !canvas) {
       return;
     }
-    evt.preventDefault();
 
     const size = canvas.getSize();
     const initPos = { x: evt.pageX, y: evt.pageY };
