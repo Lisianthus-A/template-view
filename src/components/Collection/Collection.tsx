@@ -15,6 +15,7 @@ interface Props {
   items?: ShowItem[];
   onDropdownItemClick?: (dropItem: any, item: Item) => void;
   dropdownListGenerator?: (item: Item) => any[];
+  onLoading?: (isDone: boolean) => void;
 }
 
 interface Item {
@@ -115,6 +116,7 @@ function Collection({
   showSearch = true,
   showDropdown = true,
   items = [],
+  onLoading,
   onDropdownItemClick,
   dropdownListGenerator,
 }: Props) {
@@ -134,6 +136,7 @@ function Collection({
       }
       disabledRef.current = true;
 
+      onLoading && onLoading(false);
       if (type === "text") {
         const config = {
           ...item.data,
@@ -174,6 +177,7 @@ function Collection({
         }
       }
 
+      onLoading && onLoading(true);
       disabledRef.current = false;
     },
     [type]
@@ -292,7 +296,11 @@ function Collection({
                     if ((evt.target as HTMLElement).nodeName === "svg") {
                       return;
                     }
-                    if ((evt.target as HTMLElement).classList.contains("collection-dropdown")) {
+                    if (
+                      (evt.target as HTMLElement).classList.contains(
+                        "collection-dropdown"
+                      )
+                    ) {
                       return;
                     }
 
@@ -306,12 +314,12 @@ function Collection({
                         dropdownListGenerator
                           ? dropdownListGenerator(item)
                           : [
-                            {
-                              icon: "icon-heart-fill",
-                              text: "收藏",
-                              checked: item.isFav,
-                            },
-                          ]
+                              {
+                                icon: "icon-heart-fill",
+                                text: "收藏",
+                                checked: item.isFav,
+                              },
+                            ]
                       }
                       onItemClick={(dItem) => handleDropdownClick(dItem, item)}
                     />

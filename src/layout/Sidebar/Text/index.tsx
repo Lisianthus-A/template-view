@@ -33,7 +33,12 @@ function Text() {
         添加文本
       </Button>
       <div className="divider" />
-      <Collection type="text" showDropdown={false} showSearch={false} />
+      <Collection
+        type="text"
+        showDropdown={false}
+        showSearch={false}
+        onLoading={(isDone) => setLoading(!isDone)}
+      />
     </div>
   );
 }
