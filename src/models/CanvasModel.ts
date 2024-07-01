@@ -50,7 +50,7 @@ class CanvasModel {
   private operateStack: Record<string, any>[] = [];
   private operateStack2: Record<string, any>[] = [];
   private timer: number = 0;
-  static OPERATE_STACK_MAX_LENGTH = 10;
+  static OPERATE_STACK_MAX_LENGTH = 30;
   private defaultJson: any = {
     type: "canvas",
     width: 1280,
@@ -201,7 +201,7 @@ class CanvasModel {
       }
       this.operateStack2.length = 0;
       this.emitStackStatus();
-    }, 200);
+    }, 0);
   }
 
   // 通知 undo redo 状态
