@@ -197,6 +197,7 @@ class CanvasModel {
       const clonedData = deepClone(data);
       this.operateStack.push(lastData!, clonedData);
       if (this.operateStack.length > CanvasModel.OPERATE_STACK_MAX_LENGTH) {
+        console.info("operate stack is full, discard first element.");
         this.operateStack.shift();
       }
       this.operateStack2.length = 0;
