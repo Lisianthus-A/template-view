@@ -11,6 +11,7 @@ export default defineConfig({
   // visualizer()
   plugins: [react()],
   esbuild: {
+    pure: isDev ? undefined : ["console.log"],
     drop: isDev ? undefined : ["debugger"],
   },
   server: {
