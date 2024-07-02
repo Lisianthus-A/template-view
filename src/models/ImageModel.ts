@@ -81,21 +81,24 @@ class ImageModel extends BaseModel {
     };
     return await new Promise<ImageModel>((resolve) => {
       const instance = new fabric.Image(img, imageConfig);
-      resolve(
-        new ImageModel(instance, {
-          imageUrl: config.imageUrl,
-          x: config.x,
-          y: config.y,
-          width: config.width,
-          height: config.height,
-          radius: config.radius,
-          angle: config.angle,
-          filter: config.filter || "",
-          originWidth: width,
-          originHeight: height,
-          zIndex: config.zIndex || 0,
-        })
-      );
+      const model = new ImageModel(instance, {
+        imageUrl: config.imageUrl,
+        x: config.x,
+        y: config.y,
+        width: config.width,
+        height: config.height,
+        radius: config.radius,
+        angle: config.angle,
+        filter: config.filter || "",
+        originWidth: width,
+        originHeight: height,
+        zIndex: config.zIndex || 0,
+      });
+      if (config.filter) {
+        model.changeFilter(config.filter);
+      }
+
+      resolve(model);
     });
   }
 

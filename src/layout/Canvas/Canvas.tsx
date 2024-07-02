@@ -141,12 +141,14 @@ function Canvas() {
     upperCanvas.addEventListener("dragenter", preventDefault);
     upperCanvas.addEventListener("dragover", preventDefault);
     upperCanvas.addEventListener("drop", onDrop);
+    upperCanvas.addEventListener("contextmenu", preventDefault as any);
     return () => {
       upperCanvas.removeEventListener("click", stopPropagation);
       upperCanvas.removeEventListener("keydown", onKeyDown);
       upperCanvas.removeEventListener("dragenter", preventDefault);
       upperCanvas.removeEventListener("dragover", preventDefault);
       upperCanvas.removeEventListener("drop", onDrop);
+      upperCanvas.removeEventListener("contextmenu", preventDefault as any);
     };
   }, []);
 

@@ -103,7 +103,11 @@ class CanvasModel {
     this.saveToStack = this.saveToStack.bind(this);
     this.emitUpdateConfig = debounce(this.emitUpdateConfig.bind(this), 0);
     this.emitStackStatus = this.emitStackStatus.bind(this);
+    this.instance.on("mouse:down", () => {
+      this.disableSave = true;
+    });
     this.instance.on("mouse:up", () => {
+      this.disableSave = false;
       this.children.forEach((child) => {
         child.updateConfig();
       });
@@ -195,7 +199,8 @@ class CanvasModel {
         return;
       }
       const clonedData = deepClone(data);
-      this.operateStack.push(lastData!, clonedData);
+      lastData && this.operateStack.push(lastData);
+      this.operateStack.push(clonedData);
       if (this.operateStack.length > CanvasModel.OPERATE_STACK_MAX_LENGTH) {
         console.info("operate stack is full, discard first element.");
         this.operateStack.shift();
