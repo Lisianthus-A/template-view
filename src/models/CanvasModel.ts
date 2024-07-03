@@ -196,6 +196,7 @@ class CanvasModel {
       const data = this.toJson();
       const lastData = this.operateStack.pop();
       if (deepCompare(lastData, data)) {
+        lastData && this.operateStack.push(lastData);
         return;
       }
       const clonedData = deepClone(data);

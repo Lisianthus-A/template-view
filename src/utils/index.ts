@@ -1,22 +1,4 @@
 /**
- * 节流，ms 毫秒内，只执行一次函数
- * @param fn 函数
- * @param ms 毫秒数
- */
-export const throttle = (fn: Function, ms: number) => {
-  let canRun = true;
-  return function (this: any) {
-    if (canRun) {
-      canRun = false;
-      fn.call(this, ...arguments);
-      setTimeout(() => {
-        canRun = true;
-      }, ms);
-    }
-  };
-};
-
-/**
  * 防抖，最后一次调用的 ms 毫秒后执行
  * @param fn 函数
  * @param ms 毫秒数
@@ -44,7 +26,8 @@ export const deepCompare = (o1: any, o2: any) => {
   }
 
   if (type1 === "[object Array]") {
-    for (let i = 0; i < o1.length; ++i) {
+    const len = Math.max(o1.length, o2.length);
+    for (let i = 0; i < len; ++i) {
       if (!deepCompare(o1[i], o2[i])) {
         return false;
       }
@@ -81,4 +64,13 @@ export const deepClone = (target: any) => {
   }
 
   return target;
+};
+
+export const shouldToast = (key: string) => {
+  const d = new Date();
+  const currentDate = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  if (localStorage.getItem(`toast-${key}`) !== currentDate) {
+    localStorage.setItem(`toast-${key}`, currentDate);
+    return true;
+  }
 };
