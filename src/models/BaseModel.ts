@@ -1,6 +1,7 @@
 import { fabric } from "fabric";
 import { canvasRef } from "@/store";
 import { Toast } from "@/components";
+import { shouldToast } from "@/utils";
 
 interface Config {
   x?: number;
@@ -212,7 +213,9 @@ class BaseModel {
       return;
     }
 
-    Toast.show("使用快捷键 Del 更方便哦~");
+    if (shouldToast("del")) {
+      Toast.show("使用快捷键 Del 更方便哦~");
+    }
     canvas.del();
   }
 }

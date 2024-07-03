@@ -4,28 +4,15 @@ import { canvasRef } from "@/store";
 import EventBus from "@/utils/event";
 import { Icon } from "@/components";
 import styles from "./Sidebar.module.scss";
-// import Template from "./Template";
 import Attr from "./Attr";
 import Material from "./Material";
 import Text from "./Text";
-// import My from "./My";
-import Shape from "./Shape";
 
 const tabs = [
-  // {
-  //   id: "template",
-  //   iconType: "icon-template",
-  //   text: "模板",
-  // },
   {
     id: "material",
     iconType: "icon-material",
     text: "素材",
-  },
-  {
-    id: "shape",
-    iconType: "icon-shape",
-    text: "图形",
   },
   {
     id: "text",
@@ -37,11 +24,6 @@ const tabs = [
     iconType: "icon-attr",
     text: "属性",
   },
-  // {
-  //   id: "my",
-  //   iconType: "icon-my",
-  //   text: "我的",
-  // },
 ];
 
 function Sidebar() {
@@ -89,12 +71,9 @@ function Sidebar() {
         ))}
       </div>
       <div className={styles.main}>
-        {/* {currentTab === "template" && <Template />} */}
         {currentTab === "material" && <Material />}
         {currentTab === "text" && <Text />}
-        {currentTab === "shape" && <Shape />}
         {currentTab === "attr" && <Attr />}
-        {/* {currentTab === "my" && <My />} */}
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import { canvasRef } from "@/store";
 import { Button, Icon, Tooltip, Toast } from "@/components";
 import { CanvasDataContext } from "@/App";
 import { ImageModel } from "@/models";
+import { shouldToast } from "@/utils";
 import EventBus from "@/utils/event";
 import type { ChangeEvent } from "react";
 import { Group, Layer } from "@webtoon/psd";
@@ -102,6 +103,7 @@ function Header() {
   //   });
   // };
 
+  // psd 按组渲染
   const renderByGroups = async (result: Psd) => {
     if (!canvasRef.current) {
       return;
@@ -232,7 +234,10 @@ function Header() {
     if (!canvasRef.current || !stackStatus.undo) {
       return;
     }
-    Toast.show("使用快捷键 Ctrl + Z 更方便哦~");
+
+    if (shouldToast("undo")) {
+      Toast.show("使用快捷键 Ctrl + Z 更方便哦~");
+    }
 
     canvasRef.current.undo();
   };
@@ -241,8 +246,9 @@ function Header() {
     if (!canvasRef.current || !stackStatus.redo) {
       return;
     }
-
-    Toast.show("使用快捷键 Ctrl + Y 更方便哦~");
+    if (shouldToast("redo")) {
+      Toast.show("使用快捷键 Ctrl + Y 更方便哦~");
+    }
     canvasRef.current.redo();
   };
 

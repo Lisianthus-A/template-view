@@ -1,5 +1,5 @@
 import styles from "./index.module.scss";
-import { Button, Collection } from "@/components";
+import { Button, TextCollection } from "@/components";
 import { canvasRef } from "@/store";
 import { TextModel } from "@/models";
 import { useState } from "react";
@@ -33,12 +33,7 @@ function Text() {
         添加文本
       </Button>
       <div className="divider" />
-      <Collection
-        type="text"
-        showDropdown={false}
-        showSearch={false}
-        onLoading={(isDone) => setLoading(!isDone)}
-      />
+      <TextCollection onLoading={(isDone) => setLoading(!isDone)} />
     </div>
   );
 }

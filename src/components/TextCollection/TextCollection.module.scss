@@ -4,25 +4,9 @@
       margin-top: 16px;
     }
 
-    .collection-header {
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 14px;
-    }
-
     .collection-title {
+      margin-bottom: 8px;
       font-weight: 600;
-    }
-
-    .collection-more {
-      color: #666;
-      cursor: pointer;
-    }
-
-    .collection-back {
-      cursor: pointer;
     }
 
     .collection-items {
@@ -61,32 +45,6 @@
       max-height: 90%;
     }
 
-    .collection-name {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      background-color: rgba(0, 0, 0, 0.3);
-      color: #fff;
-      text-align: center;
-      border-radius: 0 0 4px 4px;
-    }
-
-    .collection-dropdown {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 20px;
-      height: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 4px;
-      transition: all 0.3s;
-      &:hover {
-        background-color: rgba(0, 0, 0, 0.2);
-      }
-    }
-
     .collection-size {
       position: absolute;
       left: 8px;
@@ -95,12 +53,6 @@
       opacity: 0;
       transition: all 0.3s;
       font-size: 12px;
-    }
-
-    .no-data {
-      margin-top: 64px;
-      color: #666;
-      text-align: center;
     }
   }
 }
