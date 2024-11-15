@@ -46,7 +46,7 @@ class CanvasModel {
   private backgroundImage: string;
   private backgroundColor: string;
   private bgFilter: string;
-  private disableSave: boolean = true;
+  disableSave: boolean = true;
   private operateStack: Record<string, any>[] = [];
   private operateStack2: Record<string, any>[] = [];
   private timer: number = 0;

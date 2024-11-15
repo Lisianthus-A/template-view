@@ -78,8 +78,8 @@ class RectModel extends BaseModel {
           strokeWidth: config.strokeWidth,
           angle: config.angle,
           radius: config.radius,
-          originWidth: config.width,
-          originHeight: config.height,
+          originWidth: 200,
+          originHeight: 200,
           zIndex: config.zIndex || 0,
         })
       );

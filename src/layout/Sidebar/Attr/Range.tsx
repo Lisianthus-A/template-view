@@ -1,5 +1,6 @@
 import styles from "./Range.module.scss";
 import { useEffect, useState, useCallback, useRef } from "react";
+import { canvasRef } from "@/store";
 import type { ChangeEvent, MouseEvent } from "react";
 import type { FormObject } from "@/models/CanvasModel";
 
@@ -68,11 +69,18 @@ function Range({ item }: Props) {
   }, []);
 
   const handleMouseUp = useCallback(() => {
+    if (canvasRef.current) {
+      canvasRef.current.disableSave = false;
+    }
+
     window.removeEventListener("mousemove", handleMouseMove);
     window.removeEventListener("mouseup", handleMouseUp);
   }, []);
 
   const handleMouseDown = (evt: MouseEvent) => {
+    if (canvasRef.current) {
+      canvasRef.current.disableSave = true;
+    }
     // 非主键
     if (evt.button !== 0) {
       return;
@@ -98,7 +106,9 @@ function Range({ item }: Props) {
     progress.style.setProperty("--rail-width", `${percent * 100}%`);
     const nextValue = (percent * max) >> 0;
     setInputValue(nextValue);
-    handler(nextValue);
+    setTimeout(() => {
+      handler(nextValue);
+    }, 0);
   };
 
   useEffect(() => {

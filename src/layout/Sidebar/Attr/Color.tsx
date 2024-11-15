@@ -1,7 +1,7 @@
 import styles from "./Color.module.scss";
 import { useEffect, useState } from "react";
 import { SketchPicker } from "react-color";
-import { MouseEvent } from "react";
+import { canvasRef } from "@/store";
 import type { ColorResult } from "react-color";
 import type { FormObject } from "@/models/CanvasModel";
 
@@ -17,13 +17,29 @@ function Color({ item }: Props) {
   const [color, setColor] = useState(value);
   const [visible, setVisible] = useState(false);
 
+  const handleMouseDown = () => {
+    if (canvasRef.current) {
+      canvasRef.current.disableSave = true;
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (canvasRef.current) {
+      canvasRef.current.disableSave = false;
+      debugger;
+      handler(color);
+    }
+  };
+
   const handleChange = (color: ColorResult) => {
     const { r, g, b, a } = color.rgb;
     const rgba = `rgba(${r}, ${g}, ${b}, ${a})`;
-    handler(rgba);
+    setTimeout(() => {
+      handler(rgba);
+    }, 0);
   };
 
-  const toggleVisible = (evt: MouseEvent) => {
+  const toggleVisible = () => {
     if (!visible) {
       const bodyClick = () => {
         setVisible(false);
@@ -47,7 +63,12 @@ function Color({ item }: Props) {
       <div className="color-bar-wrapper" onClick={toggleVisible}>
         <div className="color-bar" style={{ backgroundColor: color }} />
       </div>
-      <div className="picker-wrapper" onClick={(evt) => evt.stopPropagation()}>
+      <div
+        className="picker-wrapper"
+        onClick={(evt) => evt.stopPropagation()}
+        onMouseUp={handleMouseUp}
+        onMouseDown={handleMouseDown}
+      >
         {visible && <SketchPicker onChange={handleChange} color={color} />}
       </div>
     </div>
