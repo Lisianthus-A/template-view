@@ -8,6 +8,7 @@ import Range from "../Attr/Range";
 import DoubleInput from "../Attr/DoubleInput";
 import styles from "./index.module.scss";
 import type { ChangeEvent } from "react";
+import { shouldToast } from "@/utils";
 
 function Material() {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
@@ -53,7 +54,7 @@ function Material() {
     if (!canvas) {
       return;
     }
-    if (checked) {
+    if (checked && shouldToast("mode")) {
       Toast.show("按住 Shift 键可画出直线哦~");
     }
     canvas.instance.isDrawingMode = checked;
