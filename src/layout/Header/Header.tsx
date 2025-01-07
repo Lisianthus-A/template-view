@@ -223,7 +223,10 @@ function Header() {
     try {
       const text = await file.text();
       const json = JSON.parse(text);
-      canvas.loadFromJson(json);
+      await canvas.loadFromJson(json);
+      setTimeout(() => {
+        canvas.saveToStack();
+      });
     } catch (err) {
       Toast.show("导入失败");
       console.log("catch import error", err);
