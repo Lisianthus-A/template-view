@@ -128,22 +128,22 @@ function Header() {
         )}
       </div>
       <div className="header-right">
-        <Button style={{ marginRight: 8 }}>
-          导入
+        <Button style={{ marginRight: 8 }} onClick={handleSaveImage}>
+          导出图片
+        </Button>
+
+        <Button onClick={handleSaveData} style={{ marginRight: 8 }}>
+          导出Json
+        </Button>
+
+        <Button type="primary">
+          导入Json
           <input
             className="hide-input"
             type="file"
             accept=".json"
             onChange={handleImportByJson}
           />
-        </Button>
-
-        <Button style={{ marginRight: 8 }} onClick={handleSaveImage}>
-          导出图片
-        </Button>
-
-        <Button type="primary" onClick={handleSaveData}>
-          保存
         </Button>
       </div>
     </div>
