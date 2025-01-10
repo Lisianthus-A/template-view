@@ -42,7 +42,7 @@ function Header() {
     location.replace(location.origin);
   };
 
-  const handleFileChange = async (evt: ChangeEvent<HTMLInputElement>) => {
+  const handleImportByPsd = async (evt: ChangeEvent<HTMLInputElement>) => {
     const file = evt.target.files && evt.target.files[0];
     if (file === null) {
       return;
@@ -205,7 +205,7 @@ function Header() {
     });
   };
 
-  const handleFileChange2 = async (evt: ChangeEvent<HTMLInputElement>) => {
+  const handleImportByJson = async (evt: ChangeEvent<HTMLInputElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) {
       return;
@@ -300,7 +300,7 @@ function Header() {
             className="hide-input"
             type="file"
             accept=".psd"
-            onChange={handleFileChange}
+            onChange={handleImportByPsd}
           />
         </Button>
         <Button style={{ marginRight: 8 }}>
@@ -309,7 +309,7 @@ function Header() {
             className="hide-input"
             type="file"
             accept=".json"
-            onChange={handleFileChange2}
+            onChange={handleImportByJson}
           />
         </Button>
 
