@@ -37,6 +37,7 @@ class ImageModel extends BaseModel {
     this.config = config;
     this.zIndex = config.zIndex;
 
+    this.downloadImage = this.downloadImage.bind(this);
     this.replaceImage = this.replaceImage.bind(this);
     this.setRadius = this.setRadius.bind(this);
     this.changeFilter = this.changeFilter.bind(this);
@@ -118,6 +119,13 @@ class ImageModel extends BaseModel {
           handler: this.replaceImage,
         },
         {
+          id: `${this.id}-downloadImage`,
+          type: "button",
+          name: "下载图片",
+          value: "",
+          handler: this.downloadImage,
+        },
+        {
           id: `${this.id}-filter`,
           type: "select",
           name: "滤镜",
@@ -188,6 +196,14 @@ class ImageModel extends BaseModel {
     );
     canvas.saveToStack();
     canvas.render();
+  }
+
+  // 下载图片
+  downloadImage() {
+    const a = document.createElement("a");
+    a.href = this.config.imageUrl;
+    a.download = `image-${Date.now()}.png`;
+    a.click();
   }
 
   // 替换图片
