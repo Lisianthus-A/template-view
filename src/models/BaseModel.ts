@@ -1,7 +1,7 @@
 import { fabric } from "fabric";
 import { canvasRef } from "@/store";
 import { Toast } from "@/components";
-import { shouldToast } from "@/utils";
+import { deepClone, shouldToast } from "@/utils";
 
 interface Config {
   x?: number;
@@ -40,6 +40,7 @@ class BaseModel {
     this.resetSize = this.resetSize.bind(this);
     this.setAngle = this.setAngle.bind(this);
     this.setZIndex = this.setZIndex.bind(this);
+    this.clone = this.clone.bind(this);
     this.remove = this.remove.bind(this);
     this.instance.on("moving", this.updateConfig);
     this.instance.on("scaling", this.updateConfig);
@@ -118,6 +119,13 @@ class BaseModel {
         max: 40,
         value: this.zIndex,
         handler: this.setZIndex,
+      },
+      {
+        id: `${this.id}-clone`,
+        type: "button",
+        name: "克隆组件",
+        value: "",
+        handler: this.clone,
       },
       {
         id: `${this.id}-remove`,
@@ -204,6 +212,22 @@ class BaseModel {
     canvas.changeZIndex(this as any);
     canvas.saveToStack();
     canvas.render();
+  }
+
+  // 克隆组件
+  async clone() {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const ComponentClass = this.constructor as any;
+    const config: Config = deepClone(this.config);
+    config.x = (config.x || 0) + 20;
+    config.y = (config.y || 0) + 20;
+    const model = await ComponentClass.create(config);
+    canvas.add(model);
+    canvas.instance.setActiveObject(model.instance);
   }
 
   // 移除组件
