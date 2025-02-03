@@ -133,11 +133,11 @@ function Header() {
         </Button>
 
         <Button onClick={handleSaveData} style={{ marginRight: 8 }}>
-          导出Json
+          导出数据
         </Button>
 
-        <Button type="primary">
-          导入Json
+        <Button>
+          导入数据
           <input
             className="hide-input"
             type="file"
