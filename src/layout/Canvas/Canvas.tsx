@@ -102,11 +102,13 @@ function Canvas() {
       const key = evt.key.toUpperCase();
 
       if (key === "DELETE") {
+        evt.preventDefault();
         canvas.del();
         return;
       }
 
       if (evt.ctrlKey || evt.metaKey) {
+        evt.preventDefault();
         if (key === "Z") {
           canvas.undo();
         } else if (key === "Y") {
