@@ -514,24 +514,33 @@ class CanvasModel {
     this.emitUpdateConfig();
   }
 
-  // 保存为图片
-  async toImage(smallSize?: boolean) {
-    const base64String = this.instance.toDataURL();
-    if (smallSize) {
-      const canvas = document.createElement("canvas");
-      canvas.width = this.width / 4;
-      canvas.height = this.height / 4;
-      const ctx = canvas.getContext("2d")!;
-      const image = new Image();
-      image.src = base64String;
-      await new Promise<any>((resolve) => {
-        image.onload = resolve;
-      });
-      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL("image/png");
+  // 保存为图片（按实际使用到的最大尺寸导出）
+  async toImage() {
+    const objects = this.instance.getObjects();
+
+    if (objects.length === 0) {
+      return this.instance.toDataURL();
     }
 
-    return base64String;
+    let minX = Infinity, minY = Infinity;
+    let maxX = -Infinity, maxY = -Infinity;
+    objects.forEach((obj) => {
+      const bounds = obj.getBoundingRect();
+      minX = Math.min(minX, bounds.left);
+      minY = Math.min(minY, bounds.top);
+      maxX = Math.max(maxX, bounds.left + bounds.width);
+      maxY = Math.max(maxY, bounds.top + bounds.height);
+    });
+
+    const width = maxX - minX;
+    const height = maxY - minY;
+
+    return this.instance.toDataURL({
+      left: minX,
+      top: minY,
+      width,
+      height,
+    });
   }
 
   // 保存为 json
